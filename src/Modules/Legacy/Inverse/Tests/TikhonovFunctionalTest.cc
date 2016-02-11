@@ -38,6 +38,7 @@
 // DataType libraries
 #include <Core/Datatypes/DenseMatrix.h>
 #include <Core/Datatypes/DenseColumnMatrix.h>
+#include <Core/Datatypes/MatrixTypeConversions.h>
 
 // Tikhonov specific
 #include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonovImpl.h>
@@ -537,7 +538,7 @@ TEST_F(TikhonovFunctionalTest, loadIDNonSquaredMeasurementReguWithSquareOptionWr
     EXPECT_THROW(tikAlgImp->execute(), SCIRun::Core::DimensionMismatch);
 }
 
-/*  TODO: implement functionality tests
+/*  TODO: implement functionality tests   */
 /// -------- BASIC FUNCTIONS TESTS ------------ ///
 
 // ID square forward matrix with ZERO regularization, RAND input
@@ -548,6 +549,7 @@ TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandData)
     DenseMatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(3, 3)));    // forward matrix (IDentityt)
     DenseMatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(3, 1)));   // measurement data (rand)
     DenseMatrixHandle inverseSolution_;
+    DenseMatrix measuredDataDesnse = matrix_cast::as_dense(measuredData);
     
     // input data
     stubPortNWithThisData(tikAlgImp, 0, fwdMatrix);
@@ -562,13 +564,13 @@ TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandData)
     tikAlgImp->execute();
     
     // return value
-    inverseSolution_ = getDataOnThisOutputPort(tikAlgImp,0);
+    inverseSolution_ = matrix_cast::as_dense(getDataOnThisOutputPort(tikAlgImp,0)_;
     
     // check result
-    EXPECT_MATRIX_EQ(inverseSolution_->transpose(), measuredData->transpose());
+    EXPECT_MATRIX_EQ(inverseSolution_, measuredDataDense);
     
 }
-*/
+
 /*
 // ID square forward matrix with dafault options
 TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandDataWithDefaultOptions)
