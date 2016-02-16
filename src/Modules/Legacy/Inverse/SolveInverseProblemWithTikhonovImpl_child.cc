@@ -109,36 +109,7 @@ using namespace SCIRun::Core::Logging;
         
         G = M1 + lambda_sq * M2;
         
-        try
-        {
-            LinearAlgebra::solve_lapack(G,  y, b);
-        }
-        catch (LinearAlgebra::LapackError&)
-        {
-            const std::string errorMessage("The Tikhonov linear system could not be solved for a regularization parameter in the Lambda Range of the L-curve. Use a higher Lambda Range ''From'' value for the L-Curve calculation.");
-            if (pr_)
-            {
-                pr_->error(errorMessage);
-            }
-            else
-            {
-                std::cerr << errorMessage << std::endl;
-            }
-            throw;
-        }
-        catch(DimensionMismatch&)
-        {
-            const std::string errorMessage("Invalid matrix sizes are being used in the Tikhonov linear system.");
-            if (pr_)
-            {
-                pr_->error(errorMessage);
-            }
-            else
-            {
-                std::cerr << errorMessage << std::endl;
-            }
-            throw;
-        }
+        b = G.lu().solve(y).eval();
         
         solution = M3 * b;
         

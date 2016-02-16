@@ -94,18 +94,6 @@ using namespace SCIRun::Core::Logging;
     }
 
     
-///////// Extra Linear algebra functionalities (should this go here??
-//////////////////////////////
-    namespace LinearAlgebra
-    {
-        void solve_lapack(const DenseMatrix& A, const DenseColumnMatrix& b, DenseColumnMatrix& x)
-        {
-            x = A.lu().solve(b).eval();
-        }
-    }
-////////////////////
-//////////////////
-    
 ////// CHECK IF INPUT MATRICES HAVE THE CORRECT SIZE
     bool TikhonovImplAbstractBase::checkInputMatrixSizes()
     {
@@ -499,28 +487,6 @@ using namespace SCIRun::Core::Logging;
         }
     }
     
-    
-#if 0
-/////// tcl_command ???? 
-    void SolveInverseProblemWithTikhonov::tcl_command(GuiArgs& args, void* userdata)
-    {
-        if (args[1] == "updategraph" && args.count() == 4)
-        {
-            double lambda = boost::lexical_cast<double>(args[2]);
-            int lambda_index = boost::lexical_cast<double>(args[3]);
-            
-            if (input_handle_.get() != 0 && algo_handle_.get() != 0)
-            {
-                algo_handle_->update_graph(*input_handle_, lambda, lambda_index, lambda_resolution_.get());
-            }
-        }
-        else
-        {
-            // Relay data to the Module class
-            Module::tcl_command(args, userdata);
-        }
-    }    
-#endif
 
 //// Set eta, rho and num lambda
     TikhonovAlgorithm::LCurveInput::LCurveInput(const std::vector<double>& rho, const std::vector<double>& eta, const std::vector<double>& lambdaArray, int nLambda)
