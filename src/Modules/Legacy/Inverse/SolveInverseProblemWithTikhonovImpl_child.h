@@ -53,6 +53,7 @@ namespace BioPSE
     class SCISHARE SolveInverseProblemWithTikhonovImpl_child : public TikhonovImplAbstractBase
     {
         
+    public:
         SolveInverseProblemWithTikhonovImpl_child(const SCIRun::Core::Datatypes::DenseMatrixHandle& forwardMatrix,
                                                   const SCIRun::Core::Datatypes::DenseMatrixHandle& measuredData,
                                                   AlgorithmChoice regularizationChoice = automatic,

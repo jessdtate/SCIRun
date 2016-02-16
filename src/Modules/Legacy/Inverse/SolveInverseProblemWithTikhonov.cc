@@ -27,7 +27,7 @@
 */
 
 #include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonov.h>
-#include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonovImpl.h>
+#include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonovImpl_child.h>
 #include <Core/Datatypes/MatrixTypeConversions.h>
 #include <Core/Datatypes/DenseColumnMatrix.h>
 #include <Core/Datatypes/Legacy/Field/Field.h>
@@ -81,15 +81,15 @@ void SolveInverseProblemWithTikhonov::execute()
   {
     using namespace BioPSE;
     auto state = get_state();
-    auto gui_tikhonov_case = static_cast<TikhonovAlgorithmImpl::AlgorithmChoice>(state->getValue(TikhonovCase).toInt());
-    auto gui_tikhonov_solution_subcase = static_cast<TikhonovAlgorithmImpl::AlgorithmSolutionSubcase>(state->getValue(TikhonovSolutionSubcase).toInt());
-    auto gui_tikhonov_residual_subcase = static_cast<TikhonovAlgorithmImpl::AlgorithmResidualSubcase>(state->getValue(TikhonovResidualSubcase).toInt());
+    auto gui_tikhonov_case = static_cast<SolveInverseProblemWithTikhonovImpl_child::AlgorithmChoice>(state->getValue(TikhonovCase).toInt());
+    auto gui_tikhonov_solution_subcase = static_cast<SolveInverseProblemWithTikhonovImpl_child::AlgorithmSolutionSubcase>(state->getValue(TikhonovSolutionSubcase).toInt());
+    auto gui_tikhonov_residual_subcase = static_cast<SolveInverseProblemWithTikhonovImpl_child::AlgorithmResidualSubcase>(state->getValue(TikhonovResidualSubcase).toInt());
     
     auto denseForward = matrix_cast::as_dense(forward_matrix_h);
     auto measuredDense = matrix_convert::to_dense(hMatrixMeasDat);
     auto regMatDense = matrix_cast::as_dense(hMatrixRegMat.get_value_or(nullptr));
     auto noiseCovDense = matrix_cast::as_dense(hMatrixNoiseCov.get_value_or(nullptr));
-    TikhonovAlgorithmImpl algo(denseForward,
+    SolveInverseProblemWithTikhonovImpl_child algo(denseForward,
       measuredDense,
       gui_tikhonov_case,
       gui_tikhonov_solution_subcase,
@@ -98,9 +98,9 @@ void SolveInverseProblemWithTikhonov::execute()
       noiseCovDense,
       computeRegularizedInverse, this);
 
-    TikhonovAlgorithmImpl::Input::lcurveGuiUpdate update = boost::bind(&SolveInverseProblemWithTikhonov::update_lcurve_gui, this, _1, _2, _3);
+    SolveInverseProblemWithTikhonovImpl_child::Input::lcurveGuiUpdate update = boost::bind(&SolveInverseProblemWithTikhonov::update_lcurve_gui, this, _1, _2, _3);
 
-    TikhonovAlgorithmImpl::Input input(
+    SolveInverseProblemWithTikhonovImpl_child::Input input(
       state->getValue(RegularizationMethod).toString(),
       state->getValue(LambdaFromDirectEntry).toDouble(),
       state->getValue(LambdaSliderValue).toDouble(),
