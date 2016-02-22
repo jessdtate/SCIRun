@@ -77,7 +77,8 @@ using namespace SCIRun::Core::Logging;
                                   computeRegularizedInverse,
                                   pr)
     {
-        //TODO: size checking here.
+        // prealocate matrices needed for computation
+        preAlocateInverseMatrices();
     }
 //////////////////
 //////////

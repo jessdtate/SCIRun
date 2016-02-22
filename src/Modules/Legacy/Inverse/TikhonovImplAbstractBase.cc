@@ -74,7 +74,9 @@ using namespace SCIRun::Core::Logging;
     computeRegularizedInverse_(computeRegularizedInverse),
     pr_(pr)
     {
-        //TODO: size checking here.
+        // check input sizes
+        checkInputMatrixSizes();
+        
     }
 
 
@@ -227,12 +229,6 @@ using namespace SCIRun::Core::Logging;
         // Alocate variables
         DenseColumnMatrix solution(M);
         double lambda_sq=0;
-        
-        // check input sizes
-        checkInputMatrixSizes();
-        
-        // prealocate matrices needed for computation
-        preAlocateInverseMatrices();
         
         ///////////////////////////////
         // Lambda selection
