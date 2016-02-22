@@ -540,7 +540,7 @@ TEST_F(TikhonovFunctionalTest, loadIDNonSquaredMeasurementReguWithSquareOptionWr
 
 /*  TODO: implement functionality tests   */
 /// -------- BASIC FUNCTIONS TESTS ------------ ///
-
+/*
 // ID square forward matrix with ZERO regularization, RAND input
 TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandData)
 {
@@ -570,7 +570,7 @@ TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandData)
     EXPECT_MATRIX_EQ(inverseSolution_, measuredDataDense);
     
 }
-
+*/
 /*
 // ID square forward matrix with dafault options
 TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandDataWithDefaultOptions)
