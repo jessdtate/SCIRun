@@ -32,25 +32,25 @@
 
 #include <Dataflow/Network/Module.h>
 #include <Modules/Legacy/Inverse/share.h>
+#include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonov.h>
 
-namespace BioPSE
-{
-  namespace TikhonovAlgorithm
-  {
-    struct LCurveInput;
-  }
-}
+
 
 namespace SCIRun {
   namespace Modules {
     namespace Inverse {
 
-      class SCISHARE SolveInverseProblemWithTikhonovSVD : public SolveInverseProblemWithTikhonov,
+      class SCISHARE SolveInverseProblemWithTikhonovSVD :
+        public SolveInverseProblemWithTikhonov,
         public Has4InputPorts<MatrixPortTag, MatrixPortTag, MatrixPortTag, MatrixPortTag>,
         public Has3OutputPorts<MatrixPortTag, MatrixPortTag, MatrixPortTag>
       {
+          
       public:
-        SolveInverseProblemWithTikhonovSVD(): SolveInverseProblemWithTikhonovSVD{};
+          SolveInverseProblemWithTikhonovSVD();//: SolveInverseProblemWithTikhonov() {};
+          
+          void execute();
+          
     
       };
 

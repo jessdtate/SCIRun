@@ -34,6 +34,7 @@ SET(Modules_Legacy_Inverse_HEADERS
   TikhonovImplAbstractBase.h
   SolveInverseProblemWithTikhonovImpl_child.h
   SolveInverseProblemWithTikhonovSVD.h
+  SolveInverseProblemWithTikhonovSVD_impl.h
 )
 
 SET(Modules_Legacy_Inverse_SRCS
@@ -42,6 +43,7 @@ SET(Modules_Legacy_Inverse_SRCS
   TikhonovImplAbstractBase.cc
   SolveInverseProblemWithTikhonovImpl_child.cc
   SolveInverseProblemWithTikhonovSVD.cc
+  SolveInverseProblemWithTikhonovSVD_impl.cc
 )
 
 SCIRUN_ADD_LIBRARY(Modules_Legacy_Inverse

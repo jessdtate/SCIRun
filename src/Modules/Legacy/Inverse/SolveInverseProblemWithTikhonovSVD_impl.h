@@ -30,8 +30,8 @@
 //    Author     : Moritz Dannhauer and Ayla Khan
 //    Date       : 15 Aug. 2012
 
-#ifndef BioPSE_SolveInverseProblemWithTikhonovChild_H__
-#define BioPSE_SolveInverseProblemWithTikhonovChild_H__
+#ifndef BioPSE_SolveInverseProblemWithTikhonovSVDimpl_H__
+#define BioPSE_SolveInverseProblemWithTikhonovSVDimpl_H__
 
 #include <vector>
 
@@ -50,26 +50,34 @@
 namespace BioPSE
 {
     
-    class SCISHARE SolveIn : public TikhonovImplAbstractBase
+    class SCISHARE SolveInverseProblemWithTikhonovSVD_impl : public TikhonovImplAbstractBase
     {
         
+        
     public:
-        SolveInverseProblemWithTikhonovSVD_impl(const SCIRun::Core::Datatypes::DenseMatrixHandle& forwardMatrix,
-                                                  const SCIRun::Core::Datatypes::DenseMatrixHandle& measuredData,
-                                                  AlgorithmChoice regularizationChoice = automatic,
-                                                  AlgorithmSolutionSubcase regularizationSolutionSubcase = solution_constrained,
-                                                  AlgorithmResidualSubcase regularizationResidualSubcase = residual_constrained,
-                                                  const SCIRun::Core::Datatypes::DenseMatrixHandle sourceWeighting = 0,
-                                                  const SCIRun::Core::Datatypes::DenseMatrixHandle sensorWeighting = 0,
-                                                  bool computeRegularizedInverse = false,
-                                                  SCIRun::Core::Logging::LegacyLoggerInterface* pr = 0);
+        
+        SolveInverseProblemWithTikhonovSVD_impl(    const SCIRun::Core::Datatypes::DenseMatrixHandle& forwardMatrix,
+                                                    const SCIRun::Core::Datatypes::DenseMatrixHandle& measuredData,
+                                                    bool computeRegularizedInverse = false,
+                                                    SCIRun::Core::Logging::LegacyLoggerInterface* pr = 0)
+        
+                                    : TikhonovImplAbstractBase( forwardMatrix,
+                                                               measuredData,
+                                                               automatic,
+                                                               solution_constrained,
+                                                               residual_constrained,
+                                                               0,
+                                                               0,
+                                                               computeRegularizedInverse,
+                                                               pr)
+                                        {};
+        
         
     private:
         
         const SCIRun::Core::Datatypes::DenseMatrix matrixU_;
         const SCIRun::Core::Datatypes::DenseMatrix matrixS_;
         const SCIRun::Core::Datatypes::DenseMatrix matrixV_;
-//        const SCIRun::DenseMatrix* matrixX_;
         SCIRun::Core::Datatypes::DenseMatrix y;
         
         
