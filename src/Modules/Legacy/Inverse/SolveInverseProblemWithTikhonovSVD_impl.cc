@@ -52,7 +52,7 @@
 // EIGEN LIBRARY
 #include <Eigen/SVD>
 
-using namespace Eigen;
+
 using namespace BioPSE;
 using namespace SCIRun;
 using namespace SCIRun::Core::Datatypes;
@@ -68,7 +68,7 @@ void SolveInverseProblemWithTikhonovSVD_impl::preAlocateInverseMatrices()
 {
     
     
-    JacobiSVD<DenseMatrix> svd( *forwardMatrix, ComputeFullU | ComputeFullV);
+//    Eigen::JacobiSVD<DenseMatrix> svd( *forwardMatrix, ComputeFullU | ComputeFullV);
     
     
     /*

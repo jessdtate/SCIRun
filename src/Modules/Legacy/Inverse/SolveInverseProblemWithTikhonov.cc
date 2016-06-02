@@ -37,6 +37,11 @@ using namespace SCIRun::Core::Datatypes;
 using namespace SCIRun::Modules::Inverse;
 using namespace SCIRun::Dataflow::Networks;
 using namespace SCIRun::Core::Algorithms;
+using namespace SCIRun::Core::Algorithms::Inverse;
+
+ALGORITHM_PARAMETER_DEF(Inverse, TikhonovSolutionSubcase);
+ALGORITHM_PARAMETER_DEF(Inverse, TikhonovResidualSubcase);
+
 
 const ModuleLookupInfo SolveInverseProblemWithTikhonov::staticInfo_("SolveInverseProblemWithTikhonov", "Inverse", "SCIRun");
 
@@ -62,8 +67,8 @@ void SolveInverseProblemWithTikhonov::setStateDefaults()
   state->setValue(LambdaResolution, 1e-6);
   state->setValue(LambdaSliderValue, 0.0);
   state->setValue(TikhonovCase, 0);
-  state->setValue(TikhonovSolutionSubcase, 0);
-  state->setValue(TikhonovResidualSubcase, 0);
+  state->setValue(Parameters::TikhonovSolutionSubcase, 0);
+  state->setValue(Parameters::TikhonovResidualSubcase, 0);
   state->setValue(LambdaCorner, 0.0);
 }
 
@@ -81,6 +86,7 @@ void SolveInverseProblemWithTikhonov::execute()
   {
     using namespace BioPSE;
     auto state = get_state();
+
     auto gui_tikhonov_case = static_cast<SolveInverseProblemWithTikhonovImpl_child::AlgorithmChoice>(state->getValue(TikhonovCase).toInt());
     auto gui_tikhonov_solution_subcase = static_cast<SolveInverseProblemWithTikhonovImpl_child::AlgorithmSolutionSubcase>(state->getValue(TikhonovSolutionSubcase).toInt());
     auto gui_tikhonov_residual_subcase = static_cast<SolveInverseProblemWithTikhonovImpl_child::AlgorithmResidualSubcase>(state->getValue(TikhonovResidualSubcase).toInt());
@@ -149,8 +155,6 @@ const AlgorithmParameterName SolveInverseProblemWithTikhonov::LambdaMax("LambdaM
 const AlgorithmParameterName SolveInverseProblemWithTikhonov::LambdaNum("LambdaNum");
 const AlgorithmParameterName SolveInverseProblemWithTikhonov::LambdaResolution("LambdaResolution");
 const AlgorithmParameterName SolveInverseProblemWithTikhonov::TikhonovCase("TikhonovCase");
-const AlgorithmParameterName SolveInverseProblemWithTikhonov::TikhonovSolutionSubcase("TikhonovSolutionSubcase");
-const AlgorithmParameterName SolveInverseProblemWithTikhonov::TikhonovResidualSubcase("TikhonovResidualSubcase");
 const AlgorithmParameterName SolveInverseProblemWithTikhonov::LambdaSliderValue("LambdaSliderValue");
 const AlgorithmParameterName SolveInverseProblemWithTikhonov::LambdaCorner("LambdaCorner");
 const AlgorithmParameterName SolveInverseProblemWithTikhonov::LCurveText("LCurveText");

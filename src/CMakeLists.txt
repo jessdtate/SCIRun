@@ -34,12 +34,18 @@ ELSE()
   CMAKE_MINIMUM_REQUIRED(VERSION 2.8.11 FATAL_ERROR)
 ENDIF()
 
-IF(CMAKE_VERSION VERSION_GREATER 3.0)
+IF(POLICY CMP0042)
   # TODO: when support for versions older than 2.8.12 is dropped,
   # enable new policy and get rid of version check
   #
   # see https://cmake.org/cmake/help/v3.0/policy/CMP0042.html
   CMAKE_POLICY(SET CMP0042 OLD)
+ENDIF()
+IF(POLICY CMP0043)
+  CMAKE_POLICY(SET CMP0043 OLD)
+ENDIF()
+IF(POLICY CMP0049)
+  CMAKE_POLICY(SET CMP0049 NEW)
 ENDIF()
 
 PROJECT(SCIRun)
@@ -75,9 +81,9 @@ MARK_AS_ADVANCED(BUILD_SHARED_LIBS)
 
 ########################################################################
 # Headless build
-
-OPTION(BUILD_HEADLESS "Build headless version, without Qt" OFF)
-MARK_AS_ADVANCED(BUILD_HEADLESS)
+#
+#OPTION(BUILD_HEADLESS "Build headless version, without Qt" OFF)
+#MARK_AS_ADVANCED(BUILD_HEADLESS)
 
 
 ########################################################################
@@ -99,6 +105,11 @@ include(GetGitRevisionDescription)
 git_describe(VERSION_TAG --tag)
 git_describe(VERSION_BRANCH --all)
 get_git_head_revision(VERSION_REFSPEC VERSION_HASHVAR)
+
+IF(VERSION_TAG MATCHES "HEAD-HASH-NOTFOUND")
+  FILE(READ ${CMAKE_CURRENT_SOURCE_DIR}/LATEST_TAG.txt VERSION_TAG)
+  MESSAGE(STATUS "Found tag file for version info: " "${VERSION_TAG}")
+ENDIF()
 
 MESSAGE(STATUS "Git version tag: " "${VERSION_TAG}")
 MESSAGE(STATUS "Git version branch: " "${VERSION_BRANCH}")
@@ -146,7 +157,8 @@ SET(APPLICATION_URL "www.scirun.org" CACHE INTERNAL "Project URL" FORCE)
 SET(APPLICATION_VENDOR "SCI" CACHE INTERNAL "Vendor information" FORCE)
 SET(APPLICATION_CONTACT "scirun-users@sci.utah.edu" CACHE INTERNAL "Contact information" FORCE)
 SET(APPLICATION_WINDOWS_ICON "${CMAKE_SOURCE_DIR}/Resources/Icons\\\\scirun5_32.ico" CACHE INTERNAL "Windows icon" FORCE)
-SET(APPLICATION_WINDOWS_RC "${CMAKE_SOURCE_DIR}/Resources/Icons\\\\SCIRun.rc" CACHE INTERNAL "Windows icon" FORCE)
+
+SET(APPLICATION_WINDOWS_RC "${CMAKE_SOURCE_DIR}/Resources/Icons/SCIRun.rc" CACHE INTERNAL "Windows icon" FORCE)
 SET(APPLICATION_OSX_ICON_FULL_PATH "${CMAKE_SOURCE_DIR}/Resources/Icons/scirun5.icns" CACHE INTERNAL "OSX icon" FORCE)
 SET(APPLICATION_OSX_ICON "scirun5.icns" CACHE INTERNAL "OSX icon" FORCE)
 
@@ -206,60 +218,42 @@ IF(BUILD_TESTING)
 ENDIF()
 
 #########################################################################
-## Python
-#
-#OPTION(BUILD_WITH_PYTHON "Build with python support." OFF)
-#
-#IF(BUILD_WITH_PYTHON)
-#  MESSAGE(STATUS "Configuring Python")
-#  SET(PythonLibs_FIND_VERSION "3.2")
-#  FIND_PACKAGE(PythonLibs REQUIRED)
-#  IF(NOT PYTHONLIBS_FOUND)
-#    MESSAGE(FATAL_ERROR "Python 3.3 or 3.2 not found. Set PYTHON_INCLUDE_DIR and PYT#HON_LIBRARY to the correct Python installation.")
-#  ENDIF()
-#
-#  ADD_DEFINITIONS(-DBOOST_PYTHON_STATIC_LIB)
-#  ADD_DEFINITIONS(-DBUILD_WITH_PYTHON)
-#ENDIF(BUILD_WITH_PYTHON)
+# External projects
 
+MACRO(CONFIG_STANDARD_EXTERNAL name config_file directory)
+  FIND_PACKAGE(${name} CONFIGS ${config_file} HINTS ${directory} NO_SYSTEM_ENVIRONMENT_PATH)
+  IF(NOT ${name}_FOUND)
+    MESSAGE(FATAL_ERROR "${name} library not found in ${directory}")
+  ENDIF()
+ENDMACRO()
 
-FIND_PACKAGE(Zlib CONFIGS ZlibConfig.cmake HINTS ${Zlib_DIR} NO_SYSTEM_ENVIRONMENT_PATH)
-IF(NOT Zlib_FOUND)
-  MESSAGE(FATAL_ERROR "Zlib library not found in ${Zlib_DIR}")
-ENDIF()
+CONFIG_STANDARD_EXTERNAL( Zlib ZlibConfig.cmake ${Zlib_DIR} )
 INCLUDE(${ZLIB_USE_FILE})
 
-FIND_PACKAGE(LibPNG CONFIGS LibPNGConfig.cmake HINTS ${LibPNG_DIR} NO_SYSTEM_ENVIRONMENT_PATH)
-IF(NOT LibPNG_FOUND)
-  MESSAGE(FATAL_ERROR "Png library not found in ${LibPNG_DIR}")
-ENDIF()
+CONFIG_STANDARD_EXTERNAL( LibPNG LibPNGConfig.cmake ${LibPNG_DIR} )
 INCLUDE(${PNG_USE_FILE})
 
-FIND_PACKAGE(SQLite CONFIGS SQLiteConfig.cmake HINTS ${SQLite_DIR} NO_SYSTEM_ENVIRONMENT_PATH)
-IF(NOT SQLite_FOUND)
-  MESSAGE(FATAL_ERROR "SQLite library not found in ${SQLite_DIR}")
-ENDIF()
+CONFIG_STANDARD_EXTERNAL( SQLite SQLiteConfig.cmake ${SQLite_DIR} )
 INCLUDE(${SQLITE_USE_FILE})
 
-FIND_PACKAGE(Teem CONFIGS TeemConfig.cmake HINTS ${Teem_DIR} NO_SYSTEM_ENVIRONMENT_PATH)
-IF(NOT Teem_FOUND)
-  MESSAGE(FATAL_ERROR "Teem library not found in ${Teem_DIR}")
-ENDIF()
+CONFIG_STANDARD_EXTERNAL( Teem TeemConfig.cmake ${Teem_DIR} )
 INCLUDE(${Teem_USE_FILE})
 
+CONFIG_STANDARD_EXTERNAL( Freetype FreetypeConfig.cmake ${Freetype_DIR} )
+INCLUDE(${FREETYPE_USE_FILE})
+
 IF(BUILD_WITH_PYTHON)
-  FIND_PACKAGE(Python CONFIGS PythonConfig.cmake HINTS ${Python_DIR} NO_SYSTEM_ENVIRONMENT_PATH)
-  IF(NOT Python_FOUND)
-    MESSAGE(FATAL_ERROR "Python library not found in ${Python_DIR}")
-  ENDIF()
+  CONFIG_STANDARD_EXTERNAL( Python PythonConfig.cmake ${Python_DIR} )
   INCLUDE(${SCI_PYTHON_USE_FILE})
 ENDIF()
 
-FIND_PACKAGE(Boost CONFIGS BoostConfig.cmake HINTS ${Boost_DIR} NO_SYSTEM_ENVIRONMENT_PATH)
-IF(NOT Boost_FOUND)
-  MESSAGE(FATAL_ERROR "Boost library not found in ${Boost_DIR}")
-ENDIF()
+CONFIG_STANDARD_EXTERNAL( Boost BoostConfig.cmake ${Boost_DIR} )
 INCLUDE(${SCI_BOOST_USE_FILE})
+
+IF(WITH_TETGEN)
+  CONFIG_STANDARD_EXTERNAL( Tetgen TetgenConfig.cmake ${Tetgen_DIR} )
+  INCLUDE(${TETGEN_USE_FILE})
+ENDIF()
 
 ########################################################################
 # Custom compiler flags and definitions
@@ -356,45 +350,11 @@ ENDIF()
 # ENDIF()
 
 ########################################################################
-# Download external data sources
+# Configure tetgen module build
 
-#OPTION(DOWNLOAD_TOOLKITS "Download toolkit repositories." ON)
-#MARK_AS_ADVANCED(DOWNLOAD_TOOLKITS)
-#IF(DOWNLOAD_TOOLKITS)
-#  INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/CMake/ToolkitsConfig.cmake)
-#  EXTERNAL_TOOLKIT(BrainStimulator)
-#  EXTERNAL_TOOLKIT(FwdInvToolkit)
-#ENDIF()
-#
-#########################################################################
-## Configure zlib external project
-#
-#INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/CMake/ZlibConfig.cmake)
-#EXTERNAL_ZLIB_LIBRARY(GIT)
-#
-#
-##########################################################################
-## Configure Boost external project
-#
-#INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/CMake/BoostConfig.cmake)
-#EXTERNAL_BOOST_LIBRARY(GIT)
-#
-#
-#########################################################################
-## Configure teem external project
-#
-#INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/CMake/TeemConfig.cmake)
-#EXTERNAL_TEEM_LIBRARY(GIT)
-
-
-########################################################################
-# Configure tetgen external project
-
-OPTION(WITH_TETGEN "Build Tetgen." ON)
-MARK_AS_ADVANCED(WITH_TETGEN)
 IF(WITH_TETGEN)
   ADD_DEFINITIONS(-DWITH_TETGEN)
-ENDIF(WITH_TETGEN)
+ENDIF()
 
 ########################################################################
 # Configure CPM and Spire - http://github.com/iauns/cpm
@@ -405,8 +365,7 @@ MESSAGE(STATUS "Configuring CPMs")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # CPM Setup.
-#set(CPM_DIR "${CMAKE_CURRENT_BINARY_DIR}/Externals/cpm-packages" CACHE TYPE STRING)
-set(CPM_DIR "${CMAKE_CURRENT_BINARY_DIR}/cpm-packages" CACHE TYPE STRING)
+set(CPM_DIR "${CMAKE_CURRENT_BINARY_DIR}/cpm" CACHE TYPE STRING)
 find_package(Git)
 if(NOT GIT_FOUND)
   message(FATAL_ERROR "CPM requires Git.")
@@ -476,7 +435,7 @@ CPM_AddModule("es_general"
 # ++ MODULE: Entity System Rendering.
 CPM_AddModule("es_render"
   GIT_REPOSITORY "https://github.com/CIBC-Internal/cpm-es-render"
-  GIT_TAG "origin/SCIRun"
+  GIT_TAG "origin/FontTextures"
   USE_EXISTING_VER TRUE)
 
 # ++ MODULE: Acorn
@@ -505,11 +464,22 @@ MESSAGE(STATUS "Done configuring CPMs")
 # Copy Spire-SCIRun specific assets and shaders
 
 set(OUTPUT_SHADER_DIR ${CMAKE_CURRENT_BINARY_DIR}/Shaders)
+set(OUTPUT_FONT_DIR ${CMAKE_CURRENT_BINARY_DIR}/Fonts)
 set(OUTPUT_ASSET_DIR ${CMAKE_CURRENT_BINARY_DIR}/Assets)
 
 function (CopyShaders src_shader_dir dest_shader_dir)
   if (NOT dest_shader_dir STREQUAL "")
     file(COPY ${src_shader_dir}/ DESTINATION ${dest_shader_dir}
+      FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+      DIRECTORY_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                            GROUP_READ GROUP_EXECUTE
+                            WORLD_READ WORLD_EXECUTE)
+  endif()
+endfunction()
+
+function (CopyFonts src_font_dir dest_font_dir)
+  if (NOT dest_font_dir STREQUAL "")
+    file(COPY ${src_font_dir}/ DESTINATION ${dest_font_dir}
       FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
       DIRECTORY_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
                             GROUP_READ GROUP_EXECUTE
@@ -531,6 +501,12 @@ if (DEFINED OUTPUT_SHADER_DIR)
   CopyShaders(${CMAKE_CURRENT_SOURCE_DIR}/Interface/Modules/Render/ES/shaders ${OUTPUT_SHADER_DIR})
 else()
   message(WARNING "Not copying shader files. OUTPUT_SHADER_DIR variable not found.")
+endif()
+
+if (DEFINED OUTPUT_FONT_DIR)
+  CopyFonts(${CMAKE_CURRENT_SOURCE_DIR}/Interface/Modules/Render/ES/fonts ${OUTPUT_FONT_DIR})
+else()
+  message(WARNING "Not copying font files. OUTPUT_FONT_DIR variable not found.")
 endif()
 
 if (DEFINED OUTPUT_ASSET_DIR)
@@ -610,7 +586,7 @@ INCLUDE_DIRECTORIES(
   ${SCIRun_SOURCE_DIR}/Externals/log4cpp/include
   ${SCI_TEEM_INCLUDE}
   ${SCI_ZLIB_INCLUDE}
-  ${SCI_TETGEN_INCLUDE}
+  #${SCI_TETGEN_INCLUDE}
 )
 
 INCLUDE_DIRECTORIES(SYSTEM ${SCI_BOOST_INCLUDE})
@@ -655,7 +631,9 @@ MARK_AS_ADVANCED(CMAKE_LIBRARY_OUTPUT_DIRECTORY CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 SET(BUILD_FROM_TOP_LEVEL 1)
 
 ADD_SUBDIRECTORY(Externals)
-ADD_SUBDIRECTORY(Interface)
+IF(NOT BUILD_HEADLESS)
+  ADD_SUBDIRECTORY(Interface)
+ENDIF()
 ADD_SUBDIRECTORY(Core)
 ADD_SUBDIRECTORY(Dataflow)
 ADD_SUBDIRECTORY(Modules)
@@ -797,23 +775,25 @@ SET_PROPERTY(TARGET Engine_Network         PROPERTY FOLDER "Dataflow/Engine")
 SET_PROPERTY(TARGET Engine_Scheduler         PROPERTY FOLDER "Dataflow/Engine")
 SET_PROPERTY(TARGET Dataflow_State         PROPERTY FOLDER "Dataflow")
 
-SET_PROPERTY(TARGET Interface_Modules_Base   PROPERTY FOLDER "Interface/Modules")
-SET_PROPERTY(TARGET Interface_Modules_DataIO   PROPERTY FOLDER "Interface/Modules")
-SET_PROPERTY(TARGET Interface_Modules_Math   PROPERTY FOLDER "Interface/Modules")
-SET_PROPERTY(TARGET Interface_Modules_Visualization   PROPERTY FOLDER "Interface/Modules")
-SET_PROPERTY(TARGET Interface_Modules_Render   PROPERTY FOLDER "Interface/Modules")
-SET_PROPERTY(TARGET Interface_Modules_FiniteElements   PROPERTY FOLDER "Interface/Modules")
-SET_PROPERTY(TARGET Interface_Modules_BrainStimulator   PROPERTY FOLDER "Interface/Modules")
-SET_PROPERTY(TARGET Interface_Modules_Testing   PROPERTY FOLDER "Interface/Modules")
-SET_PROPERTY(TARGET Interface_Modules_String   PROPERTY FOLDER "Interface/Modules")
-SET_PROPERTY(TARGET Interface_Modules_Fields   PROPERTY FOLDER "Interface/Modules")
-SET_PROPERTY(TARGET Interface_Modules_Bundle   PROPERTY FOLDER "Interface/Modules")
-SET_PROPERTY(TARGET Interface_Modules_Matlab   PROPERTY FOLDER "Interface/Modules")
-SET_PROPERTY(TARGET Interface_Modules_Forward   PROPERTY FOLDER "Interface/Modules")
-SET_PROPERTY(TARGET Interface_Modules_Inverse   PROPERTY FOLDER "Interface/Modules")
-SET_PROPERTY(TARGET Interface_Modules_Teem   PROPERTY FOLDER "Interface/Modules")
-SET_PROPERTY(TARGET Interface_Modules_Factory   PROPERTY FOLDER "Interface/Modules")
-SET_PROPERTY(TARGET Interface_Application   PROPERTY FOLDER "Interface/Application")
+IF(NOT BUILD_HEADLESS)
+  SET_PROPERTY(TARGET Interface_Modules_Base   PROPERTY FOLDER "Interface/Modules")
+  SET_PROPERTY(TARGET Interface_Modules_DataIO   PROPERTY FOLDER "Interface/Modules")
+  SET_PROPERTY(TARGET Interface_Modules_Math   PROPERTY FOLDER "Interface/Modules")
+  SET_PROPERTY(TARGET Interface_Modules_Visualization   PROPERTY FOLDER "Interface/Modules")
+  SET_PROPERTY(TARGET Interface_Modules_Render   PROPERTY FOLDER "Interface/Modules")
+  SET_PROPERTY(TARGET Interface_Modules_FiniteElements   PROPERTY FOLDER "Interface/Modules")
+  SET_PROPERTY(TARGET Interface_Modules_BrainStimulator   PROPERTY FOLDER "Interface/Modules")
+  SET_PROPERTY(TARGET Interface_Modules_Testing   PROPERTY FOLDER "Interface/Modules")
+  SET_PROPERTY(TARGET Interface_Modules_String   PROPERTY FOLDER "Interface/Modules")
+  SET_PROPERTY(TARGET Interface_Modules_Fields   PROPERTY FOLDER "Interface/Modules")
+  SET_PROPERTY(TARGET Interface_Modules_Bundle   PROPERTY FOLDER "Interface/Modules")
+  SET_PROPERTY(TARGET Interface_Modules_Matlab   PROPERTY FOLDER "Interface/Modules")
+  SET_PROPERTY(TARGET Interface_Modules_Forward   PROPERTY FOLDER "Interface/Modules")
+  SET_PROPERTY(TARGET Interface_Modules_Inverse   PROPERTY FOLDER "Interface/Modules")
+  SET_PROPERTY(TARGET Interface_Modules_Teem   PROPERTY FOLDER "Interface/Modules")
+  SET_PROPERTY(TARGET Interface_Modules_Factory   PROPERTY FOLDER "Interface/Modules")
+  SET_PROPERTY(TARGET Interface_Application   PROPERTY FOLDER "Interface/Application")
+ENDIF()
 
 SET_PROPERTY(TARGET Modules_Basic   PROPERTY FOLDER "Modules/Basic")
 SET_PROPERTY(TARGET Modules_Math   PROPERTY FOLDER "Modules/Math")
@@ -830,9 +810,9 @@ SET_PROPERTY(TARGET Modules_Legacy_FiniteElements   PROPERTY FOLDER "Modules/Fin
 SET_PROPERTY(TARGET Modules_Legacy_Fields PROPERTY FOLDER "Modules/Fields")
 SET_PROPERTY(TARGET Modules_Legacy_Converters PROPERTY FOLDER "Modules/Basic")
 SET_PROPERTY(TARGET Modules_Legacy_Forward PROPERTY FOLDER "Modules/Forward")
+SET_PROPERTY(TARGET Modules_Legacy_String PROPERTY FOLDER "Modules/String")
 SET_PROPERTY(TARGET Modules_Legacy_Inverse PROPERTY FOLDER "Modules/Inverse")
 SET_PROPERTY(TARGET Modules_Legacy_Matlab_DataIO PROPERTY FOLDER "Modules/DataIO")
-SET_PROPERTY(TARGET Modules_Legacy_MatlabInterface PROPERTY FOLDER "Modules/Matlab")
 SET_PROPERTY(TARGET Modules_Legacy_Visualization   PROPERTY FOLDER "Modules/Visualization")
 SET_PROPERTY(TARGET Modules_Legacy_Teem_DataIO   PROPERTY FOLDER "Modules/Teem")
 SET_PROPERTY(TARGET Modules_Legacy_Teem_Misc   PROPERTY FOLDER "Modules/Teem")
@@ -904,30 +884,28 @@ IF(BUILD_TESTING)
   SET_PROPERTY(TARGET Modules_Legacy_Matlab_DataIO_Tests PROPERTY FOLDER "Modules/DataIO")
   SET_PROPERTY(TARGET Modules_Factory_Tests   PROPERTY FOLDER "Modules/Basic")
 
-  SET_PROPERTY(TARGET Interface_Modules_Render_Tests PROPERTY FOLDER "Interface/Tests")
+  IF(NOT BUILD_HEADLESS)
+    SET_PROPERTY(TARGET Interface_Modules_Render_Tests PROPERTY FOLDER "Interface/Tests")
+  ENDIF()
   IF(BUILD_WITH_PYTHON)
     SET_PROPERTY(TARGET Core_Python_Tests     PROPERTY FOLDER "Core/Tests")
     SET_PROPERTY(TARGET Engine_Python_Tests   PROPERTY FOLDER "Dataflow/Engine/Tests")
+	SET_PROPERTY(TARGET Modules_Python_Tests   PROPERTY FOLDER "Modules/Python")
   ENDIF()
 ENDIF()
 
-#SET_PROPERTY(TARGET Boost_external   PROPERTY FOLDER "Externals")
 SET_PROPERTY(TARGET ${CPM_LIBRARIES} PROPERTY FOLDER "Externals")
 SET_PROPERTY(TARGET ${SCI_LOG4CPP_LIBRARY} PROPERTY FOLDER "Externals")
-#SET_PROPERTY(TARGET sqlite PROPERTY FOLDER "Externals")
 SET_PROPERTY(TARGET cleaver PROPERTY FOLDER "Externals")
-#SET_PROPERTY(TARGET Zlib_external   PROPERTY FOLDER "Externals")
-#SET_PROPERTY(TARGET Teem_external   PROPERTY FOLDER "Externals")
 SET_PROPERTY(TARGET xml2 PROPERTY FOLDER "Externals")
 
 IF(BUILD_WITH_PYTHON)
   SET_PROPERTY(TARGET Core_Python         PROPERTY FOLDER "Core")
   SET_PROPERTY(TARGET SCIRunPythonAPI PROPERTY FOLDER "Dataflow/Engine")
-ENDIF()
-
-IF(WITH_TETGEN)
-  SET_PROPERTY(TARGET tetgen         PROPERTY FOLDER "Externals")
-  SET_PROPERTY(TARGET tetlib         PROPERTY FOLDER "Externals")
+  SET_PROPERTY(TARGET Modules_Python   PROPERTY FOLDER "Modules/Python")
+  IF(NOT BUILD_HEADLESS)
+    SET_PROPERTY(TARGET Interface_Modules_Python   PROPERTY FOLDER "Interface/Modules")
+  ENDIF()
 ENDIF()
 
 ########################################################################
