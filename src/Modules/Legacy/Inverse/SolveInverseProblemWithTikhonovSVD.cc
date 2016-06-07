@@ -65,8 +65,8 @@ void SolveInverseProblemWithTikhonovSVD::execute()
             auto state = get_state();
 
             
-            auto denseForward = matrix_cast::as_dense(forward_matrix_h);
-            auto measuredDense = matrix_convert::to_dense(hMatrixMeasDat);
+            auto denseForward = castMatrix::toDense(forward_matrix_h);
+            auto measuredDense = convertMatrix::toDense(hMatrixMeasDat);
     
             
             SolveInverseProblemWithTikhonovSVD_impl algo(   denseForward,

@@ -50,6 +50,7 @@
 #include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonovSVD_impl.h>
 
 // EIGEN LIBRARY
+//#include <Eigen/Eigen>
 #include <Eigen/SVD>
 
 
@@ -67,9 +68,8 @@ using namespace SCIRun::Core::Algorithms;
 void SolveInverseProblemWithTikhonovSVD_impl::preAlocateInverseMatrices()
 {
     
-    
-//    Eigen::JacobiSVD<DenseMatrix> svd( *forwardMatrix, ComputeFullU | ComputeFullV);
-    
+//    Eigen::JacobiSVD<Eigen::MatrixXf> SVDdecomposition( castMatrix::toDense(forwardMatrix_), Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Eigen::JacobiSVD<DenseMatrix> SVDdecomposition( forwardMatrix_, Eigen::ComputeFullU | Eigen::ComputeFullV);
     
     /*
     const SCIRun::Core::Datatypes::DenseMatrix matrixU_;
@@ -82,6 +82,11 @@ void SolveInverseProblemWithTikhonovSVD_impl::preAlocateInverseMatrices()
 SCIRun::Core::Datatypes::DenseColumnMatrix SolveInverseProblemWithTikhonovSVD_impl::computeInverseSolution( double lambda_sq, bool inverseCalculation )
 {
     DenseColumnMatrix solution(3);
+    
+    const int M = matrixU.nrows();
+    
+    
+    
     return solution;
 }
 
@@ -130,44 +135,42 @@ SCIRun::Core::Datatypes::DenseColumnMatrix SolveInverseProblemWithTikhonovSVD_im
 //        (*Uy_)[i] = inner_product(matrixU_, i, matrixMeasDatRHS_);
 //}
 //
-//TikhonovSVDAlgorithm::~TikhonovSVDAlgorithm() {}
-//ColumnMatrixHandle TikhonovSVDAlgorithm::get_solution() const { return solution_; }
-//DenseMatrixHandle TikhonovSVDAlgorithm::get_inverse_matrix() const { return inverseMat_; }
 //
-//////////////////////////////////////////////////////////////////////////////
-//// THIS FUNCTION returns the inner product of one column of matrix A
-//// and w , B=A(:,i)'*w
-/////////////////////////////////////////////////////////////////////////////
-//double
-//TikhonovSVDAlgorithm::inner_product(const DenseMatrix& A, size_type col_num, const ColumnMatrix& w)
-//{
-//    int nRows = A.nrows();
-//    double B = 0;
-//    for (int i = 0; i < nRows; i++)
-//        B += A[i][col_num] * w[i];
-//    return B;
-//}
-//
-////////////////////////////////////////////////////////////////////////
-//// THIS FUNCTION returns regularized solution by tikhonov method
-////////////////////////////////////////////////////////////////////////
-//
-//namespace TikhonovSVDAlgorithmDetail
-//{
-//    struct IsAlmostZero : public std::unary_function<double, bool>
-//    {
-//        bool operator()(double d) const
-//        {
-//            return fabs(d) < 1e-14;
-//        }
-//    };
-//    
-//    size_type count_non_zero_entries_in_column(const DenseMatrix& S, size_t column)
-//    {
-//        return std::count_if(S[column], S[column] + S.nrows(), std::not1(IsAlmostZero()));
-//    }
-//}
-//
+
+////////////////////////////////////////////////////////////////////////////
+// THIS FUNCTION returns the inner product of one column of matrix A
+// and w , B=A(:,i)'*w
+///////////////////////////////////////////////////////////////////////////
+double
+TikhonovSVDAlgorithm::inner_product(const DenseMatrix& A, size_type col_num, const ColumnMatrix& w)
+{
+    int nRows = A.nrows();
+    double B = 0;
+    for (int i = 0; i < nRows; i++)
+        B += A[i][col_num] * w[i];
+    return B;
+}
+
+//////////////////////////////////////////////////////////////////////
+// THIS FUNCTION returns regularized solution by tikhonov method
+//////////////////////////////////////////////////////////////////////
+
+namespace TikhonovSVDAlgorithmDetail
+{
+    struct IsAlmostZero : public std::unary_function<double, bool>
+    {
+        bool operator()(double d) const
+        {
+            return fabs(d) < 1e-14;
+        }
+    };
+    
+    size_type count_non_zero_entries_in_column(const DenseMatrix& S, size_t column)
+    {
+        return std::count_if(S[column], S[column] + S.nrows(), std::not1(IsAlmostZero()));
+    }
+}
+
 //void
 //TikhonovSVDAlgorithm::tikhonov_fun(double lambda) const
 //{

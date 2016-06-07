@@ -88,13 +88,13 @@ void SolveInverseProblemWithTikhonov::execute()
     auto state = get_state();
 
     auto gui_tikhonov_case = static_cast<SolveInverseProblemWithTikhonovImpl_child::AlgorithmChoice>(state->getValue(TikhonovCase).toInt());
-    auto gui_tikhonov_solution_subcase = static_cast<SolveInverseProblemWithTikhonovImpl_child::AlgorithmSolutionSubcase>(state->getValue(TikhonovSolutionSubcase).toInt());
-    auto gui_tikhonov_residual_subcase = static_cast<SolveInverseProblemWithTikhonovImpl_child::AlgorithmResidualSubcase>(state->getValue(TikhonovResidualSubcase).toInt());
+    auto gui_tikhonov_solution_subcase = static_cast<SolveInverseProblemWithTikhonovImpl_child::AlgorithmSolutionSubcase>(state->getValue(Core::Algorithms::Inverse::Parameters::TikhonovSolutionSubcase).toInt());
+    auto gui_tikhonov_residual_subcase = static_cast<SolveInverseProblemWithTikhonovImpl_child::AlgorithmResidualSubcase>(state->getValue(Core::Algorithms::Inverse::Parameters::TikhonovResidualSubcase).toInt());
     
-    auto denseForward = matrix_cast::as_dense(forward_matrix_h);
-    auto measuredDense = matrix_convert::to_dense(hMatrixMeasDat);
-    auto regMatDense = matrix_cast::as_dense(hMatrixRegMat.get_value_or(nullptr));
-    auto noiseCovDense = matrix_cast::as_dense(hMatrixNoiseCov.get_value_or(nullptr));
+    auto denseForward = castMatrix::toDense(forward_matrix_h);
+    auto measuredDense = convertMatrix::toDense(hMatrixMeasDat);
+    auto regMatDense = castMatrix::toDense(hMatrixRegMat.get_value_or(nullptr));
+    auto noiseCovDense = castMatrix::toDense(hMatrixNoiseCov.get_value_or(nullptr));
     SolveInverseProblemWithTikhonovImpl_child algo(denseForward,
       measuredDense,
       gui_tikhonov_case,
