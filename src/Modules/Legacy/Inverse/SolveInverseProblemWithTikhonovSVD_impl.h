@@ -76,14 +76,17 @@ namespace BioPSE
     private:
         
         const SCIRun::Core::Datatypes::DenseMatrix matrixU_;
-        const SCIRun::Core::Datatypes::DenseMatrix matrixS_;
+        const SCIRun::Core::Datatypes::DenseColumnMatrix matrixS_;
         const SCIRun::Core::Datatypes::DenseMatrix matrixV_;
         SCIRun::Core::Datatypes::DenseMatrix y;
+        SCIRun::Core::Datatypes::DenseMatrix Uy;
         
         
         SCIRun::Core::Datatypes::DenseColumnMatrix computeInverseSolution( double lambda_sq, bool inverseCalculation);
         void preAlocateInverseMatrices();
         //      bool checkInputMatrixSizes(); // DEFINED IN PARENT, MIGHT WANT TO OVERRIDE SOME OTHER TIME
+        
+        size_type count_non_zero_entries_in_column(const DenseMatrix& S, size_t column);
         
     };
 }

@@ -68,93 +68,64 @@ using namespace SCIRun::Core::Algorithms;
 void SolveInverseProblemWithTikhonovSVD_impl::preAlocateInverseMatrices()
 {
     
-//    Eigen::JacobiSVD<Eigen::MatrixXf> SVDdecomposition( castMatrix::toDense(forwardMatrix_), Eigen::ComputeFullU | Eigen::ComputeFullV);
-    Eigen::JacobiSVD<DenseMatrix> SVDdecomposition( forwardMatrix_, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    // Compute the SVD of the forward matrix
+        Eigen::JacobiSVD<Eigen::MatrixXf> SVDdecomposition( castMatrix::toDense(forwardMatrix_), Eigen::ComputeFullU | Eigen::ComputeFullV);
     
-    /*
-    const SCIRun::Core::Datatypes::DenseMatrix matrixU_;
-    const SCIRun::Core::Datatypes::DenseMatrix matrixS_;
-    const SCIRun::Core::Datatypes::DenseMatrix matrixV_;
-    */
-}
-
-
-SCIRun::Core::Datatypes::DenseColumnMatrix SolveInverseProblemWithTikhonovSVD_impl::computeInverseSolution( double lambda_sq, bool inverseCalculation )
-{
-    DenseColumnMatrix solution(3);
+    // Set matrix U, S and V
+        matrixU_ = SVDdecomposition.matrixU();
+        matrixV_ = SVDdecomposition.matrixV();
+        matrixS_ = SVDdecomposition.singularValues();
     
-    const int M = matrixU.nrows();
+    // Compute the projection of data y on the left singular vectors
+        Uy = matrixU_.transpose() * y;
     
-    
-    
-    return solution;
-}
-
-
-//
-//
-//TikhonovSVDAlgorithm::TikhonovSVDAlgorithm(const ColumnMatrix& matrixMeasDatRHS, const DenseMatrix& matrixU, const DenseMatrix& matrixS, const DenseMatrix& matrixV, const DenseMatrix* matrixX, Method method)
-//: matrixMeasDatRHS_(matrixMeasDatRHS),
-//matrixU_(matrixU),
-//matrixS_(matrixS),
-//matrixV_(matrixV),
-//matrixX_(matrixX)
-//{
-//    const int M = matrixU.nrows();
-//    int N;
-//    
-//        if (!matrixX_)
-//            throw InvalidState("X matrix not specified.");
-//        
-//        N = matrixX->nrows();
-//        const int P = matrixV.nrows();
-//        if (M < N)
-//        {
-//            //throw InvalidState("The forward matrix should be overdetermined.");  //TODO--VERIFY REQUIREMENTS
-//        }
-//        if (
-//            //matrixX->ncols() != N     //TODO--VERIFY REQUIREMENTS
-//            //||
-//            //matrixS.nrows() != P   //TODO--VERIFY REQUIREMENTS
-//            //||
-//            //matrixU.ncols() != N   //TODO--VERIFY REQUIREMENTS
-//            //||
-//            P > N
-//            || matrixMeasDatRHS_.nrows() != M)
-//        {
-//            throw InvalidState("Input matrix dimensions incorrect.");
-//        }
-//    }
-//    
-//    int columns = M, solutionRows = N;
-//    Uy_ = new ColumnMatrix(matrixU.ncols());
-//    inverseMat_ = new DenseMatrix(solutionRows, columns),
-//    solution_ = new ColumnMatrix(solutionRows);
-//    
-//    for (size_type i = 0; i < matrixU_.ncols(); i++)
-//        (*Uy_)[i] = inner_product(matrixU_, i, matrixMeasDatRHS_);
-//}
-//
-//
-
-////////////////////////////////////////////////////////////////////////////
-// THIS FUNCTION returns the inner product of one column of matrix A
-// and w , B=A(:,i)'*w
-///////////////////////////////////////////////////////////////////////////
-double
-TikhonovSVDAlgorithm::inner_product(const DenseMatrix& A, size_type col_num, const ColumnMatrix& w)
-{
-    int nRows = A.nrows();
-    double B = 0;
-    for (int i = 0; i < nRows; i++)
-        B += A[i][col_num] * w[i];
-    return B;
 }
 
 //////////////////////////////////////////////////////////////////////
 // THIS FUNCTION returns regularized solution by tikhonov method
 //////////////////////////////////////////////////////////////////////
+SCIRun::Core::Datatypes::DenseColumnMatrix SolveInverseProblemWithTikhonovSVD_impl::computeInverseSolution( double lambda_sq, bool inverseCalculation )
+{
+    DenseColumnMatrix solution(3);
+    
+    const int M = matrixU.nrows();
+    const int N = matrixV.nrows();
+    
+    
+    // Check rank of fwd matrix
+    int rank = count_non_zero_entries_in_column(S, 0);
+    
+    // Compute inverse solution
+    for (int rr=o; rr<rank ; rr++)
+    {
+        double filterFactor_i = matrixS_[rr] / ( lambda_sq + matrixS_[rr] * matrixS_[rr] ) * Uy[i];
+        
+        solution += filterFactor_i * matrixV_.column(rr);
+    }
+    
+    
+    // Compute inverse matrix if required
+    if (inverseCalculation)
+    {
+        DenseMatrix tempInverseMatrix(Eigen::zero(N,M));
+        
+        for (int rr=o; rr<rank ; rr++)
+        {
+            double filterFactor_i = matrixS_[rr] / ( lambda_sq + matrixS_[rr] * matrixS_[rr] ) * Uy[i];
+            inverseMatrix_ += filterFactor_i * ( matrixV_.column(rr) *  matrixU_.column(rr).transpose() );
+        }
+        inverseMatrix_.reset( tempInverseMatrix );
+    }
+    
+    // output solution
+    return solution;
+}
 
+
+
+//////////////////////////////////////////////////////////////////
+///////// This functions evaluate if an entry is close to 0
+//////////////////////////////////////////////////////////////////
 namespace TikhonovSVDAlgorithmDetail
 {
     struct IsAlmostZero : public std::unary_function<double, bool>
@@ -164,115 +135,13 @@ namespace TikhonovSVDAlgorithmDetail
             return fabs(d) < 1e-14;
         }
     };
-    
+        
     size_type count_non_zero_entries_in_column(const DenseMatrix& S, size_t column)
     {
         return std::count_if(S[column], S[column] + S.nrows(), std::not1(IsAlmostZero()));
     }
 }
-
-//void
-//TikhonovSVDAlgorithm::tikhonov_fun(double lambda) const
-//{
-//    ColumnMatrix& X_reg = *solution_;
-//    DenseMatrix& inverseMatrix = *inverseMat_;
-//    const ColumnMatrix& Uy = *Uy_;
-//    const DenseMatrix& U = matrixU_;
-//    const DenseMatrix& S = matrixS_;
-//    const DenseMatrix& V = matrixV_;
-//    
-//    using namespace TikhonovSVDAlgorithmDetail;
-//    if (S.ncols() == 1)
-//    { // SVD case
-//        int rank = count_non_zero_entries_in_column(S, 0);
-//        const size_type v_rows = V.nrows();
-//        X_reg.zero();
-//        for (int i = 0; i < rank; i++)
-//        {
-//            double filterFactor_i = S[i][0] / (lambda*lambda + S[i][0] * S[i][0]) * Uy[i];
-//            for (int j = 0; j < v_rows; j++)
-//            {
-//                X_reg[j] += filterFactor_i * V[j][i];
-//            }
-//        }
-//        
-//        //Finding Regularized Inverse Matrix
-//        if (V.ncols() == U.ncols()) //TODO--VERIFY REQUIREMENTS
-//        {
-//            DenseMatrix Mat_temp(V.nrows(), V.ncols());
-//            for (int i = 0; i < rank; i++)
-//            {
-//                double temp = S[i][0] / (lambda * lambda + S[i][0] * S[i][0]);
-//                for (int j = 0; j < V.nrows(); j++)
-//                {
-//                    Mat_temp[j][i] = temp * V[j][i];
-//                }
-//            }
-//            DenseMatrixHandle Utranspose(U.make_transpose());
-//            Mult(inverseMatrix, Mat_temp, *Utranspose);
-//        }
-//        else
-//            inverseMatrix.zero();
-//    }
-//    else
-//    { //GSVD case
-//        const DenseMatrix& X = *matrixX_;
-//        
-//        int rank0 = count_non_zero_entries_in_column(S, 0);
-//        int rank1 = count_non_zero_entries_in_column(S, 1);
-//        if (rank0 != rank1)
-//        {
-//            throw InvalidState("singular value vectors do not have same rank");
-//        }
-//        int rank = rank0;
-//        
-//        X_reg.zero();
-//        
-//        ////TODO: make member functions for scalar*row/column, return new column vs in-place
-//        
-//        for (int i = 0; i < rank; i++)
-//        {
-//            double filterFactor_i = S[i][0] / (lambda * lambda * S[i][1] * S[i][1] + S[i][0] * S[i][0]) * Uy[i];
-//            for (int j = 0; j < X.nrows(); j++)
-//            {
-//                X_reg[j] += filterFactor_i * X[j][i];
-//            }
-//        }
-//        
-//        int minDimension = std::min(U.nrows(), U.ncols());
-//        for (int i = rank; i < minDimension; i++)
-//        {
-//            for (int j = 0; j < X.nrows(); j++)
-//            {
-//                X_reg[j] += Uy[i] * X[j][i];
-//            }
-//        }
-//		
-//        //Finding Regularized Inverse Matrix
-//        if (V.ncols() == U.ncols()) //TODO--VERIFY REQUIREMENTS
-//        {
-//            DenseMatrix Mat_temp = X;
-//            for (int i = 0; i < rank; i++)
-//            {
-//                double temp = S[i][0] / (lambda*lambda*S[i][1] * S[i][1] + S[i][0] * S[i][0]);
-//                for (int j = 0; j < X.nrows(); j++)
-//                {
-//                    Mat_temp[j][i] = temp * X[j][i];
-//                }
-//            }
-//            DenseMatrixHandle Utranspose(U.make_transpose());
-//            Mult(inverseMatrix, Mat_temp, *Utranspose);
-//        }
-//        else
-//            inverseMatrix.zero();
-//    }
-
-
-
-
-
-
-
+////////////////
 
 
 
