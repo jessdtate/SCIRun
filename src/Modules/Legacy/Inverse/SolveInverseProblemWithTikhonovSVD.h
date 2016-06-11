@@ -41,17 +41,50 @@ namespace SCIRun {
     namespace Inverse {
 
       class SCISHARE SolveInverseProblemWithTikhonovSVD :
-        public SolveInverseProblemWithTikhonov,
+        public Dataflow::Networks::Module,
         public Has4InputPorts<MatrixPortTag, MatrixPortTag, MatrixPortTag, MatrixPortTag>,
         public Has3OutputPorts<MatrixPortTag, MatrixPortTag, MatrixPortTag>
       {
           
       public:
-          SolveInverseProblemWithTikhonovSVD();//: SolveInverseProblemWithTikhonov() {};
           
-          void execute();
+          SolveInverseProblemWithTikhonovSVD(); // constructor
+          void execute();                       // execute
+          virtual void setStateDefaults();      // default params
           
-    
+
+          // define input ports
+          INPUT_PORT(0, ForwardMatrix, Matrix);
+          INPUT_PORT(1, WeightingInSourceSpace, Matrix);
+          INPUT_PORT(2, MeasuredPotentials, Matrix);
+          INPUT_PORT(3, WeightingInSensorSpace, Matrix);
+//          INPUT_PORT(4, MatrixU, Matrix);
+//          INPUT_PORT(5, MatrixS, Matrix);
+//          INPUT_PORT(6, MatrixV, Matrix);
+          
+          OUTPUT_PORT(0, InverseSolution, Matrix);
+          OUTPUT_PORT(1, RegularizationParameter, Matrix);
+          OUTPUT_PORT(2, RegInverse, Matrix);
+          
+          // UI declaration
+          static const Dataflow::Networks::ModuleLookupInfo staticInfo_;
+          
+          // Algorithm Params
+          static const Core::Algorithms::AlgorithmParameterName LambdaFromDirectEntry;
+          static const Core::Algorithms::AlgorithmParameterName RegularizationMethod;
+          static const Core::Algorithms::AlgorithmParameterName LambdaMin;
+          static const Core::Algorithms::AlgorithmParameterName LambdaMax;
+          static const Core::Algorithms::AlgorithmParameterName LambdaNum;
+          static const Core::Algorithms::AlgorithmParameterName LambdaResolution;
+          static const Core::Algorithms::AlgorithmParameterName TikhonovCase;
+          static const Core::Algorithms::AlgorithmParameterName LambdaSliderValue;
+          static const Core::Algorithms::AlgorithmParameterName LambdaCorner;
+          static const Core::Algorithms::AlgorithmParameterName LCurveText;
+          
+          
+      private:
+          // update L-curve in UI
+          void update_lcurve_gui(const double lambda, const BioPSE::TikhonovAlgorithm::LCurveInput& input, const int lambda_index);
       };
 
     }

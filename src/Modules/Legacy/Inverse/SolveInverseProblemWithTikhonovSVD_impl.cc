@@ -50,8 +50,9 @@
 #include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonovSVD_impl.h>
 
 // EIGEN LIBRARY
-//#include <Eigen/Eigen>
+#include <Eigen/Eigen>
 #include <Eigen/SVD>
+
 
 
 using namespace BioPSE;
@@ -62,22 +63,32 @@ using namespace SCIRun::Dataflow::Networks;
 using namespace SCIRun::Core::Algorithms;
 
 
-
+///////////////////////////////////////////////////////////////////
 /////// prealocate Matrices for inverse compuation
 ///     This function precalcualtes the SVD of the forward matrix and prepares singular vectors and values for posterior computations
+///////////////////////////////////////////////////////////////////
 void SolveInverseProblemWithTikhonovSVD_impl::preAlocateInverseMatrices()
 {
     
     // Compute the SVD of the forward matrix
-        Eigen::JacobiSVD<Eigen::MatrixXf> SVDdecomposition( castMatrix::toDense(forwardMatrix_), Eigen::ComputeFullU | Eigen::ComputeFullV);
+        Eigen::JacobiSVD<SCIRun::Core::Datatypes::DenseMatrix::EigenBase> svd( *forwardMatrix_, Eigen::ComputeFullU | Eigen::ComputeFullV);
+        SVDdecomposition = svd;
+    
+    // determine rank
+        rank = SVDdecomposition.nonzeroSingularValues();
+    
     
     // Set matrix U, S and V
-        matrixU_ = SVDdecomposition.matrixU();
-        matrixV_ = SVDdecomposition.matrixV();
-        matrixS_ = SVDdecomposition.singularValues();
+//        matrixU_ = convertMatrix::toDense(SVDdecomposition.computeU());
+//        matrixV_ = convertMatrix::toDense(SVDdecomposition.computeV());
+//        matrixS_ = convertMatrix::toDense(SVDdecomposition.nonzeroSingularValues());
+    
     
     // Compute the projection of data y on the left singular vectors
-        Uy = matrixU_.transpose() * y;
+        SCIRun::Core::Datatypes::DenseColumnMatrix tempUy(rank);
+        tempUy = SVDdecomposition.matrixU().transpose() * (*measuredData_);
+    
+        Uy = tempUy;
     
 }
 
@@ -86,62 +97,36 @@ void SolveInverseProblemWithTikhonovSVD_impl::preAlocateInverseMatrices()
 //////////////////////////////////////////////////////////////////////
 SCIRun::Core::Datatypes::DenseColumnMatrix SolveInverseProblemWithTikhonovSVD_impl::computeInverseSolution( double lambda_sq, bool inverseCalculation )
 {
-    DenseColumnMatrix solution(3);
     
-    const int M = matrixU.nrows();
-    const int N = matrixV.nrows();
+    // prealocate matrices
+        const int N = forwardMatrix_->ncols();
+        const int M = forwardMatrix_->nrows();
+        DenseColumnMatrix solution(DenseMatrix::Zero(N,1));
+        DenseMatrix tempInverse(DenseMatrix::Zero(N,M));
     
-    
-    // Check rank of fwd matrix
-    int rank = count_non_zero_entries_in_column(S, 0);
     
     // Compute inverse solution
-    for (int rr=o; rr<rank ; rr++)
-    {
-        double filterFactor_i = matrixS_[rr] / ( lambda_sq + matrixS_[rr] * matrixS_[rr] ) * Uy[i];
-        
-        solution += filterFactor_i * matrixV_.column(rr);
-    }
-    
-    
-    // Compute inverse matrix if required
-    if (inverseCalculation)
-    {
-        DenseMatrix tempInverseMatrix(Eigen::zero(N,M));
-        
-        for (int rr=o; rr<rank ; rr++)
+        for (int rr=0; rr<rank ; rr++)
         {
-            double filterFactor_i = matrixS_[rr] / ( lambda_sq + matrixS_[rr] * matrixS_[rr] ) * Uy[i];
-            inverseMatrix_ += filterFactor_i * ( matrixV_.column(rr) *  matrixU_.column(rr).transpose() );
+            // evaluate filter factor
+                double singVal = SVDdecomposition.singularValues()[rr];
+                double filterFactor_i =  singVal / ( lambda_sq + singVal * singVal ) * Uy[rr];
+        
+            // u[date solution
+                solution += filterFactor_i * SVDdecomposition.matrixV().col(rr);
+        
+            // update inverse operator
+                if (inverseCalculation)
+                    tempInverse += filterFactor_i * ( SVDdecomposition.matrixV().col(rr) *  SVDdecomposition.matrixU().col(rr).transpose() );
         }
-        inverseMatrix_.reset( tempInverseMatrix );
-    }
     
-    // output solution
-    return solution;
+    // output solutions
+      if (inverseCalculation)
+          inverseMatrix_.reset( new SCIRun::Core::Datatypes::DenseMatrix(tempInverse) );
+    
+        return solution;
 }
 
-
-
-//////////////////////////////////////////////////////////////////
-///////// This functions evaluate if an entry is close to 0
-//////////////////////////////////////////////////////////////////
-namespace TikhonovSVDAlgorithmDetail
-{
-    struct IsAlmostZero : public std::unary_function<double, bool>
-    {
-        bool operator()(double d) const
-        {
-            return fabs(d) < 1e-14;
-        }
-    };
-        
-    size_type count_non_zero_entries_in_column(const DenseMatrix& S, size_t column)
-    {
-        return std::count_if(S[column], S[column] + S.nrows(), std::not1(IsAlmostZero()));
-    }
-}
-////////////////
 
 
 

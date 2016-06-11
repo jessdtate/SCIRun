@@ -87,6 +87,7 @@ DEALINGS IN THE SOFTWARE.
 #include <Modules/Legacy/Matlab/DataIO/ImportDatatypesFromMatlab.h>
 #include <Modules/Legacy/Forward/BuildBEMatrix.h>
 #include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonov.h>
+#include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonovSVD.h>
 #include <Modules/DataIO/ReadMatrixClassic.h>
 #include <Modules/DataIO/WriteMatrix.h>
 #include <Modules/DataIO/ReadField.h>
@@ -180,6 +181,7 @@ void ModuleDescriptionLookup::addEssentialModules()
   addModuleDesc<EditMeshBoundingBox>("Rewrite", "...");
   addModuleDesc<ConvertIndicesToFieldData>("Real ported module", "...");
   addModuleDesc<SolveInverseProblemWithTikhonov>("...", "...");
+  addModuleDesc<SolveInverseProblemWithTikhonovSVD>("...", "...");
   addModuleDesc<TransformMeshWithTransform>("...", "...");
   addModuleDesc<ShowColorMapModule>("ShowColorMap", "Visualization", "SCIRun", "Real ported module", "...");
   addModuleDesc<ConvertMatrixToString>("ConvertMatrixToString","Converters","SCIRun","...","...");

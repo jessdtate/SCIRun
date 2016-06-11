@@ -230,9 +230,6 @@ using namespace SCIRun::Core::Logging;
         DenseColumnMatrix solution(M);
         double lambda_sq=0;
         
-        ///////////////////////////////
-        // Lambda selection
-        ///////////////////////////////
         
         //Get Regularization parameter(s) : Lambda
         if ((input.regMethod_ == "single") || (input.regMethod_ == "slider"))
@@ -256,15 +253,18 @@ using namespace SCIRun::Core::Logging;
         
         lambda_sq = lambda_ * lambda_;
         
-        
-        /////////////////////////////
-        // COMPUTE INVERSE SOLUTION  // Todo: @JCOLLFONT function needs to be defined
-        ////////////////////////////
-        
+        // compute inverse solution
         solution = computeInverseSolution( lambda_sq, computeRegularizedInverse_);
         
         // set final result
         inverseSolution_.reset(new DenseMatrix(solution));
+        
+        // output regularization parameter
+        DenseColumnMatrix tempLambda(1);
+        tempLambda[0] = lambda_;
+        
+        regularizationParameter_. reset( new DenseColumnMatrix(tempLambda) );
+        
         
     }
 //////// fi  run()

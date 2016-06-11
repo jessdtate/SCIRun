@@ -95,37 +95,44 @@ void SolveInverseProblemWithTikhonov::execute()
     auto measuredDense = convertMatrix::toDense(hMatrixMeasDat);
     auto regMatDense = castMatrix::toDense(hMatrixRegMat.get_value_or(nullptr));
     auto noiseCovDense = castMatrix::toDense(hMatrixNoiseCov.get_value_or(nullptr));
-    SolveInverseProblemWithTikhonovImpl_child algo(denseForward,
-      measuredDense,
-      gui_tikhonov_case,
-      gui_tikhonov_solution_subcase,
-      gui_tikhonov_residual_subcase,
-      regMatDense,
-      noiseCovDense,
-      computeRegularizedInverse, this);
+      
+      
+      // create algorithm solver
+        SolveInverseProblemWithTikhonovImpl_child algo(denseForward,
+                                                        measuredDense,
+                                                        gui_tikhonov_case,
+                                                        gui_tikhonov_solution_subcase,
+                                                        gui_tikhonov_residual_subcase,
+                                                        regMatDense,
+                                                        noiseCovDense,
+                                                        computeRegularizedInverse, this);
 
-    SolveInverseProblemWithTikhonovImpl_child::Input::lcurveGuiUpdate update = boost::bind(&SolveInverseProblemWithTikhonov::update_lcurve_gui, this, _1, _2, _3);
+      
+        SolveInverseProblemWithTikhonovImpl_child::Input::lcurveGuiUpdate update = boost::bind(&SolveInverseProblemWithTikhonov::update_lcurve_gui, this, _1, _2, _3);
 
-    SolveInverseProblemWithTikhonovImpl_child::Input input(
-      state->getValue(RegularizationMethod).toString(),
-      state->getValue(LambdaFromDirectEntry).toDouble(),
-      state->getValue(LambdaSliderValue).toDouble(),
-      state->getValue(LambdaNum).toInt(),
-      state->getValue(LambdaMin).toDouble(),
-      state->getValue(LambdaMax).toDouble(),
-      update);
+      // set input
+        SolveInverseProblemWithTikhonovImpl_child::Input input(
+                                                           state->getValue(RegularizationMethod).toString(),
+                                                           state->getValue(LambdaFromDirectEntry).toDouble(),
+                                                           state->getValue(LambdaSliderValue).toDouble(),
+                                                           state->getValue(LambdaNum).toInt(),
+                                                           state->getValue(LambdaMin).toDouble(),
+                                                           state->getValue(LambdaMax).toDouble(),
+                                                           update);
 
 
-    algo.run(input);
+      // run aglrithm
+        algo.run(input);
 
-    if (computeRegularizedInverse)
-    {
-      sendOutput(RegInverse, algo.get_inverse_matrix());
-    }
+      // send output
+        if (computeRegularizedInverse)
+        {
+            sendOutput(RegInverse, algo.get_inverse_matrix());
+        }
 
-    sendOutput(InverseSolution, algo.get_inverse_solution());
+        sendOutput(InverseSolution, algo.get_inverse_solution());
 
-    sendOutput(RegularizationParameter, algo.get_regularization_parameter());
+        sendOutput(RegularizationParameter, algo.get_regularization_parameter());
   }
 }
 

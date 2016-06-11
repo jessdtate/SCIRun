@@ -85,7 +85,8 @@ namespace SCIRun {
         static const Core::Algorithms::AlgorithmParameterName LambdaSliderValue;
         static const Core::Algorithms::AlgorithmParameterName LambdaCorner;
         static const Core::Algorithms::AlgorithmParameterName LCurveText;
-      protected:
+          
+      private:
         void update_lcurve_gui(const double lambda, const BioPSE::TikhonovAlgorithm::LCurveInput& input, const int lambda_index);
       };
 

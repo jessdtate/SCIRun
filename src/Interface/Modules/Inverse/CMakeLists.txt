@@ -29,15 +29,18 @@
 
 SET(Interface_Modules_Inverse_FORMS
   SolveInverseProblemWithTikhonov.ui
+  SolveInverseProblemWithTikhonovSVD.ui
 )
 
 SET(Interface_Modules_Inverse_HEADERS
   SolveInverseProblemWithTikhonovDialog.h
+  SolveInverseProblemWithTikhonovSVDDialog.h
   share.h
 )
 
 SET(Interface_Modules_Inverse_SOURCES 
   SolveInverseProblemWithTikhonovDialog.cc
+  SolveInverseProblemWithTikhonovSVDDialog.cc
 )
 
 QT4_WRAP_UI(Interface_Modules_Inverse_FORMS_HEADERS ${Interface_Modules_Inverse_FORMS})
