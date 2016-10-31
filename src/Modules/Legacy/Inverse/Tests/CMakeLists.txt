@@ -28,6 +28,7 @@
 
 SET(Modules_Legacy_Inverse_Tests_SRC
   TikhonovFunctionalTest.cc
+  TikhonovSVDFunctionalTest.cc
 )
 
 SCIRUN_ADD_UNIT_TEST(Modules_Legacy_Inverse_Tests
