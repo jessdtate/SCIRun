@@ -133,10 +133,54 @@ ModuleProxyWidget::ModuleProxyWidget(ModuleWidget* module, QGraphicsItem* parent
   stackDepth_ = 0;
 
   originalSize_ = size();
+
+  // {
+  //   const int fadeInSeconds = 1;
+  //   timeLine_ = new QTimeLine(fadeInSeconds * 1000, this);
+  //   connect(timeLine_, SIGNAL(valueChanged(qreal)), this, SLOT(loadAnimate(qreal)));
+  //   timeLine_->start();
+  // }
 }
 
 ModuleProxyWidget::~ModuleProxyWidget()
 {
+}
+
+void ModuleProxyWidget::showAndColor(const QColor& color)
+{
+  animateColor_ = color;
+  timeLine_ = new QTimeLine(4000, this);
+  connect(timeLine_, SIGNAL(valueChanged(qreal)), this, SLOT(colorAnimate(qreal)));
+  timeLine_->start();
+  ensureThisVisible();
+}
+
+void ModuleProxyWidget::loadAnimate(qreal val)
+{
+  setOpacity(val);
+  setScale(val);
+}
+
+void ModuleProxyWidget::colorAnimate(qreal val)
+{
+  if (val < 1)
+  {
+    auto effect = graphicsEffect();
+    if (!effect)
+    {
+      auto colorize = new QGraphicsColorizeEffect;
+      colorize->setColor(animateColor_);
+      setGraphicsEffect(colorize);
+    }
+    else if (auto c = dynamic_cast<QGraphicsColorizeEffect*>(effect))
+    {
+      auto newColor = c->color();
+      newColor.setAlphaF(1 - val);
+      c->setColor(newColor);
+    }
+  }
+  else // 1 = done coloring
+    setGraphicsEffect(nullptr);
 }
 
 void ModuleProxyWidget::adjustHeight(int delta)
@@ -167,7 +211,7 @@ void ModuleProxyWidget::ensureThisVisible()
 
 void ModuleProxyWidget::ensureItemVisible(QGraphicsItem* item)
 {
-  auto views = scene()->views();
+  auto views = item->scene()->views();
   if (!views.isEmpty())
   {
     auto netEd = qobject_cast<NetworkEditor*>(views[0]);
@@ -199,6 +243,7 @@ void ModuleProxyWidget::disableModuleGUI(bool disabled)
 
 void ModuleProxyWidget::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
+  clearNoteCursor();
   auto taggingOn = data(TagLayerKey).toBool();
   auto currentTag = data(CurrentTagKey).toInt();
   if (taggingOn && currentTag > NoTag)
@@ -407,4 +452,13 @@ void ModuleProxyWidget::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
 void ModuleProxyWidget::highlightPorts(int state)
 {
   doHighlight_ = state != 0;
+}
+
+ProxyWidgetPosition::ProxyWidgetPosition(QGraphicsProxyWidget* widget, const QPointF& offset/* = QPointF()*/) : widget_(widget), offset_(offset)
+{
+}
+
+QPointF ProxyWidgetPosition::currentPosition() const
+{
+  return widget_->pos() + offset_;
 }

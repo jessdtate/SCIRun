@@ -48,7 +48,7 @@ namespace Networks {
   public:
     virtual ~NetworkEditorSerializationManager() {}
     virtual ModulePositionsHandle dumpModulePositions(ModuleFilter filter) const = 0;
-    virtual void updateModulePositions(const ModulePositions& modulePositions) = 0;
+    virtual void updateModulePositions(const ModulePositions& modulePositions, bool selectAll) = 0;
 
     //TODO: refactor into dump/updateNotes, shouldn't need to distinguish parent.
     virtual ModuleNotesHandle dumpModuleNotes(ModuleFilter filter) const = 0;
@@ -61,6 +61,8 @@ namespace Networks {
 
     virtual DisabledComponentsHandle dumpDisabledComponents(ModuleFilter modFilter, ConnectionFilter connFilter) const = 0;
     virtual void updateDisabledComponents(const DisabledComponents& disabled) = 0;
+
+    virtual void copyNote(ModuleHandle from, ModuleHandle to) const = 0;
   };
 
 }}}

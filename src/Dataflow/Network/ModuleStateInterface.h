@@ -61,6 +61,9 @@ namespace Networks {
     virtual bool containsKey(const Name& name) const = 0;
     virtual Keys getKeys() const = 0;
     virtual ModuleStateHandle clone() const = 0;
+    
+    // this function preserves key/value pairs not in other
+    void overwriteWith(const ModuleStateInterface& other);
 
     //non-serialized state: algorithm output needing to be pushed, for instance--TODO: make classes instead of raw string/any
     typedef boost::any TransientValue;
@@ -74,7 +77,8 @@ namespace Networks {
 
     typedef boost::signals2::signal<void()> state_changed_sig_t;
 
-    virtual boost::signals2::connection connect_state_changed(state_changed_sig_t::slot_function_type subscriber) = 0;
+    virtual boost::signals2::connection connectStateChanged(state_changed_sig_t::slot_function_type subscriber) = 0;
+    virtual boost::signals2::connection connectSpecificStateChanged(const Name& stateKeyToObserve, state_changed_sig_t::slot_function_type subscriber) = 0;
   };
 
   class SCISHARE ModuleStateInterfaceFactory

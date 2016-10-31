@@ -93,7 +93,7 @@ using namespace SCITeem;
 DECLARE_MAKER(ReadNrrd)
 #endif
 
-const ModuleLookupInfo ReadNrrd::staticInfo_("ReadNrrd", "DataIO", "Teem");
+MODULE_INFO_DEF(ReadNrrd, DataIO, Teem)
 
 ReadNrrd::ReadNrrd() :
   Module(staticInfo_)
@@ -107,6 +107,11 @@ ReadNrrd::ReadNrrd() :
   // cached_label_(0)
 {
   INITIALIZE_PORT(Output_Data);
+}
+
+void ReadNrrd::setStateDefaults()
+{
+  get_state()->setValue(Variables::Filename, std::string());
 }
 
 std::string ReadNrrd::fileTypeList()

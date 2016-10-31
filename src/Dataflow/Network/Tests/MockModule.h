@@ -67,6 +67,7 @@ namespace SCIRun {
           MOCK_CONST_METHOD0(has_ui, bool());
           MOCK_CONST_METHOD0(hasDynamicPorts, bool());
           MOCK_CONST_METHOD0(metadata, const MetadataMap&());
+          MOCK_CONST_METHOD0(helpPageUrl, std::string());
           MOCK_METHOD1(setUiVisible, void(bool));
           MOCK_METHOD1(set_id, void(const std::string&));
           MOCK_CONST_METHOD0(get_info, const ModuleLookupInfo&());
@@ -90,6 +91,8 @@ namespace SCIRun {
           MOCK_METHOD1(connectExecuteSelfRequest, boost::signals2::connection(const ExecutionSelfRequestSignalType::slot_type&));
           MOCK_METHOD1(setExecutionDisabled, void(bool));
           MOCK_CONST_METHOD0(executionDisabled, bool(void));
+          MOCK_CONST_METHOD0(legacyPackageName, std::string());
+          MOCK_CONST_METHOD0(legacyModuleName, std::string());
         };
 
         typedef boost::shared_ptr<MockModule> MockModulePtr;

@@ -38,7 +38,8 @@ using namespace SCIRun::Core::Algorithms;
 using namespace SCIRun::Modules::Bundles;
 using namespace SCIRun::Core::Datatypes;
 
-const ModuleLookupInfo InsertMatricesIntoBundle::staticInfo_("InsertMatricesIntoBundle", "Bundle", "SCIRun");
+MODULE_INFO_DEF(InsertMatricesIntoBundle, Bundle, SCIRun)
+
 const AlgorithmParameterName InsertMatricesIntoBundle::NumMatrices("NumMatrices");
 const AlgorithmParameterName InsertMatricesIntoBundle::MatrixNames("MatrixNames");
 const AlgorithmParameterName InsertMatricesIntoBundle::MatrixReplace("MatrixReplace");
@@ -52,7 +53,7 @@ InsertMatricesIntoBundle::InsertMatricesIntoBundle() : Module(staticInfo_)
 
 void InsertMatricesIntoBundle::setStateDefaults()
 {
-
+  get_state()->setValue(MatrixReplace, VariableList());
 }
 
 void InsertMatricesIntoBundle::execute()

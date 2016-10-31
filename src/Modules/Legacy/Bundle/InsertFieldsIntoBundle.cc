@@ -6,7 +6,7 @@
    Copyright (c) 2015 Scientific Computing and Imaging Institute,
    University of Utah.
 
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
    to deal in the Software without restriction, including without limitation
@@ -37,7 +37,8 @@ using namespace SCIRun::Modules::Bundles;
 using namespace SCIRun::Dataflow::Networks;
 using namespace SCIRun::Core::Algorithms;
 
-const ModuleLookupInfo InsertFieldsIntoBundle::staticInfo_("InsertFieldsIntoBundle", "Bundle", "SCIRun");
+MODULE_INFO_DEF(InsertFieldsIntoBundle, Bundle, SCIRun)
+
 const AlgorithmParameterName InsertFieldsIntoBundle::NumFields("NumFields");
 const AlgorithmParameterName InsertFieldsIntoBundle::FieldNames("FieldNames");
 const AlgorithmParameterName InsertFieldsIntoBundle::FieldReplace("FieldReplace");
@@ -51,7 +52,7 @@ InsertFieldsIntoBundle::InsertFieldsIntoBundle() : Module(staticInfo_)
 
 void InsertFieldsIntoBundle::setStateDefaults()
 {
-
+  get_state()->setValue(FieldReplace, VariableList());
 }
 
 void InsertFieldsIntoBundle::execute()
@@ -59,10 +60,10 @@ void InsertFieldsIntoBundle::execute()
   auto bundleOption = getOptionalInput(InputBundle);
   auto fields = getRequiredDynamicInputs(InputFields);
 
-  //if (inputs_changed_ || guifield1name_.changed() || 
+  //if (inputs_changed_ || guifield1name_.changed() ||
   //  guifield2name_.changed() || guifield3name_.changed() ||
   //  guifield4name_.changed() || guifield5name_.changed() ||
-  //  guifield6name_.changed() || 
+  //  guifield6name_.changed() ||
   //  guireplace1_.changed() || guireplace2_.changed() ||
   //  guireplace3_.changed() || guireplace4_.changed() ||
   //  guireplace5_.changed() || guireplace6_.changed() ||
@@ -126,9 +127,9 @@ void InsertFieldsIntoBundle::execute()
 
 private:
   GuiString     guifield6name_;
-  
+
   GuiInt        guireplace6_;
-  
+
   GuiString     guibundlename_;
 };
 

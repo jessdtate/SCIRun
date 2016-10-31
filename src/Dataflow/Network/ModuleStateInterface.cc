@@ -35,6 +35,14 @@ ModuleStateInterface::~ModuleStateInterface()
 {
 }
 
+void ModuleStateInterface::overwriteWith(const ModuleStateInterface& other)
+{
+  for (const auto& otherKey : other.getKeys())
+  {
+    setValue(otherKey, other.getValue(otherKey).value());
+  }
+}
+
 ModuleStateInterfaceFactory::~ModuleStateInterfaceFactory()
 {
 }
@@ -52,7 +60,7 @@ void StateChangeObserver::initStateObserver(ModuleStateInterface* state)
   if (state)
   {
     //LOG_DEBUG("StateChangeObserver::initStateObserver(), connecting to state" << std::endl);
-    conn_ = state->connect_state_changed(boost::bind(&StateChangeObserver::stateChanged, this));
+    conn_ = state->connectStateChanged(boost::bind(&StateChangeObserver::stateChanged, this));
   }
 }
 

@@ -26,7 +26,6 @@
    DEALINGS IN THE SOFTWARE.
 */
 
-#include <iostream>
 #include <memory>
 #include <numeric>
 #include <boost/lexical_cast.hpp>
@@ -35,6 +34,7 @@
 #include <boost/timer.hpp>
 #include <atomic>
 
+#include <Core/Algorithms/Base/AlgorithmPreconditions.h>
 #include <Dataflow/Network/PortManager.h>
 #include <Dataflow/Network/ModuleStateInterface.h>
 #include <Dataflow/Network/Module.h>
@@ -129,15 +129,27 @@ namespace detail
         signal_(static_cast<int>(state));
       }
       current_ = state;
+      setExpandedState(state);
       return true;
     }
     virtual std::string currentColor() const override
     {
-      return "dunno";
+      return "not implemented";
     }
+    virtual Value expandedState() const override
+    {
+      return expandedState_.value_or(currentState());
+    }
+
+    virtual void setExpandedState(Value state) override
+    {
+      expandedState_ = state;
+    }
+
   private:
     Value current_;
     ExecutionStateChangedSignalType signal_;
+    boost::optional<Value> expandedState_;
   };
 }
 
@@ -145,6 +157,8 @@ namespace detail
 /*static*/ ModuleIdGeneratorHandle Module::idGenerator_(new detail::PerTypeInstanceCountIdGenerator);
 
 /*static*/ void Module::resetIdGenerator() { idGenerator_->reset(); }
+
+const int Module::TraitFlags = SCIRun::Modules::UNDEFINED_MODULE_FLAG;
 
 Module::Module(const ModuleLookupInfo& info,
   bool hasUi,
@@ -162,8 +176,9 @@ Module::Module(const ModuleLookupInfo& info,
   iports_.set_module(this);
   oports_.set_module(this);
   setLogger(defaultLogger_);
+  setUpdaterFunc([](double x) {});
 
-  Log& log = Log::get();
+  auto& log = Log::get();
 
   log << DEBUG_LOG << "Module created: " << info_.module_name_ << " with id: " << id_;
 
@@ -221,41 +236,50 @@ size_t Module::num_output_ports() const
   return oports_.size();
 }
 
-namespace //TODO requirements for state metadata reporting
+//TODO requirements for state metadata reporting
+std::string Module::stateMetaInfo() const
 {
-  std::string stateMetaInfo(ModuleStateHandle state)
+  if (!state_)
+    return "Null state map.";
+  auto keys = state_->getKeys();
+  size_t i = 0;
+  std::ostringstream ostr;
+  ostr << "\n\t{";
+  for (const auto& key : keys)
   {
-    if (!state)
-      return "Null state map.";
-    auto keys = state->getKeys();
-    size_t i = 0;
-    std::ostringstream ostr;
-    ostr << "\n\t{";
-    for (const auto& key : keys)
-    {
-      ostr << "[" << key.name() << ", " << state->getValue(key).value() << "]";
-      i++;
-      if (i < keys.size())
-        ostr << ",\n\t";
-    }
-    ostr << "}";
-    return ostr.str();
+    ostr << "[" << key.name() << ", " << state_->getValue(key).value() << "]";
+    i++;
+    if (i < keys.size())
+      ostr << ",\n\t";
   }
+  ostr << "}";
+  return ostr.str();
+}
+
+void Module::copyStateToMetadata()
+{
+  metadata_.setMetadata("Module state", stateMetaInfo());
 }
 
 bool Module::executeWithSignals() NOEXCEPT
 {
-  //Log::get() << INFO << "executing module: " << id_ << std::endl;
-  //std::cout << "executing module: " << id_ << std::endl;
+  auto starting = "STARTING MODULE: " + id_.id_;
+#ifdef BUILD_HEADLESS //TODO: better headless logging
+  static Mutex executeLogLock("headlessExecution");
+  {
+    Guard g(executeLogLock.get());
+    std::cout << starting << std::endl;
+  }
+#endif
   executeBegins_(id_);
   boost::timer executionTimer;
   {
-    std::string isoString = boost::posix_time::to_simple_string(boost::posix_time::microsec_clock::universal_time());
+    auto isoString = boost::posix_time::to_simple_string(boost::posix_time::microsec_clock::universal_time());
     metadata_.setMetadata("Last execution timestamp", isoString);
-    metadata_.setMetadata("Module state", stateMetaInfo(get_state()));
+    copyStateToMetadata();
   }
   /// @todo: status() calls should be logged everywhere, need to change legacy loggers. issue #nnn
-  status("STARTING MODULE: " + id_.id_);
+  status(starting);
   /// @todo: need separate logger per module
   //LOG_DEBUG("STARTING MODULE: " << id_.id_);
   executionState_->transitionTo(ModuleExecutionState::Executing);
@@ -276,6 +300,12 @@ bool Module::executeWithSignals() NOEXCEPT
   {
     std::ostringstream ostr;
     ostr << "Port not found, it may need initializing the module constructor. " << std::endl << "Message: " << e.what() << std::endl;
+    error(ostr.str());
+  }
+  catch (AlgorithmParameterNotFound& e)
+  {
+    std::ostringstream ostr;
+    ostr << "State key not found, it may need initializing in ModuleClass::setStateDefaults(). " << std::endl << "Message: " << e.what() << std::endl;
     error(ostr.str());
   }
   catch (Core::ExceptionBase& e)
@@ -314,16 +344,25 @@ bool Module::executeWithSignals() NOEXCEPT
   {
     std::ostringstream ostr;
     ostr << executionTime;
-    metadata_.setMetadata("last execution duration (seconds)", ostr.str());
+    metadata_.setMetadata("Last execution duration (seconds)", ostr.str());
   }
 
-  status("MODULE FINISHED: " + id_.id_);
+  auto finished = "MODULE FINISHED " + ((returnCode ? "successfully: " : "with errors: ") + id_.id_);
+  status(finished);
   /// @todo: need separate logger per module
   //LOG_DEBUG("MODULE FINISHED: " << id_.id_);
-  //TODO: brittle dependency on Completed
-  //auto endState = returnCode ? ModuleExecutionState::Completed : ModuleExecutionState::Errored;
-  auto endState = ModuleExecutionState::Completed;
-  executionState_->transitionTo(endState);
+#ifdef BUILD_HEADLESS //TODO: better headless logging
+  {
+    Guard g(executeLogLock.get());
+    std::cout << finished << std::endl;
+  }
+#endif
+  
+  //TODO: brittle dependency on Completed with executor
+  executionState_->transitionTo(ModuleExecutionState::Completed);
+
+  auto expandedEndState = returnCode ? ModuleExecutionState::Completed : ModuleExecutionState::Errored;
+  executionState_->setExpandedState(expandedEndState);
 
   if (!executionDisabled())
   {
@@ -347,9 +386,15 @@ const ModuleStateHandle Module::get_state() const
 
 void Module::set_state(ModuleStateHandle state)
 {
-  state_ = state;
+  if (!state_)
+    state_ = state;
+  else if (state) // merge/overwrite
+  {
+    state_->overwriteWith(*state);
+  }
   initStateObserver(state_.get());
   postStateChangeInternalSignalHookup();
+  copyStateToMetadata();
 }
 
 AlgorithmBase& Module::algo()
@@ -525,6 +570,7 @@ Module::Builder& Module::Builder::setStateDefaults()
   if (module_)
   {
     module_->setStateDefaults();
+    module_->copyStateToMetadata();
   }
   return *this;
 }
@@ -946,9 +992,20 @@ void Module::sendFeedbackUpstreamAlongIncomingConnections(const ModuleFeedback& 
     if (inputPort->nconnections() > 0)
     {
       auto connection = inputPort->connection(0); // only one incoming connection for input ports
-      //VariableHandle feedback(new Variable(Name(inputPort->id().toString()), info));
       //TODO: extract port method
       connection->oport_->sendConnectionFeedback(feedback);
     }
   }
+}
+
+std::string Module::helpPageUrl() const
+{
+  auto url = "http://scirundocwiki.sci.utah.edu/SCIRunDocs/index.php/CIBC:Documentation:SCIRun:Reference:"
+    + legacyPackageName() + ":" + legacyModuleName();
+  return url;
+}
+
+std::string Module::newHelpPageUrl() const
+{
+  return "https://cibctest.github.io/scirun-pages/modules.html#" + legacyModuleName();
 }

@@ -6,7 +6,7 @@
    Copyright (c) 2015 Scientific Computing and Imaging Institute,
    University of Utah.
 
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
    to deal in the Software without restriction, including without limitation
@@ -50,7 +50,7 @@ using namespace SCIRun::Core::Datatypes;
 using namespace SCIRun::Modules::Fields;
 using namespace SCIRun::Dataflow::Networks;
 
-const ModuleLookupInfo ConvertMatricesToMesh::staticInfo_("ConvertMatricesToMesh", "NewField", "SCIRun");
+MODULE_INFO_DEF(ConvertMatricesToMesh, NewField, SCIRun)
 
 ConvertMatricesToMesh::ConvertMatricesToMesh() : Module(staticInfo_)
 {
@@ -65,6 +65,9 @@ void ConvertMatricesToMesh::setStateDefaults()
   auto state = get_state();
   state->setValue(FieldBaseType, std::string("TetVol"));
   state->setValue(DataType, std::string("double"));
+
+  state->setValue(InputFieldName, std::string("[Field Name]"));
+  state->setValue(InputFieldTypeName, std::string("[Field Type]"));
 }
 
 void ConvertMatricesToMesh::execute()
@@ -101,7 +104,7 @@ void ConvertMatricesToMesh::execute()
     else if (basename == "QuadSurf") fi.make_quadsurfmesh();
     else if (basename == "TetVol") fi.make_tetvolmesh();
     else if (basename == "TriSurf") fi.make_trisurfmesh();
-    
+
     FieldHandle result_field = CreateField(fi);
     VMesh* mesh = result_field->vmesh();
 
@@ -123,7 +126,7 @@ void ConvertMatricesToMesh::execute()
 
     result_field->vfield()->resize_values();
     sendOutput(OutputField, result_field);
-  }  
+  }
 }
 
 void ConvertMatricesToMesh::process_elements(VMesh* mesh, size_type positionRows)
@@ -160,7 +163,7 @@ void ConvertMatricesToMesh::process_elements(VMesh* mesh, size_type positionRows
   }
 }
 
+const AlgorithmParameterName ConvertMatricesToMesh::InputFieldName("InputFieldName");
 const AlgorithmParameterName ConvertMatricesToMesh::InputFieldTypeName("InputFieldTypeName");
-const AlgorithmParameterName ConvertMatricesToMesh::InputFieldTypeTypeName("InputFieldTypeTypeName");
 const AlgorithmParameterName ConvertMatricesToMesh::FieldBaseType("FieldBaseType");
 const AlgorithmParameterName ConvertMatricesToMesh::DataType("DataType");

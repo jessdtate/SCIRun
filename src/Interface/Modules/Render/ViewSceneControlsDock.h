@@ -31,44 +31,69 @@ DEALINGS IN THE SOFTWARE.
 
 #include "Interface/Modules/Render/ui_ViewSceneControls.h"
 
-#include <boost/shared_ptr.hpp>
-
-#include <Interface/Modules/Render/ViewScene.h>
-
-//#include <Modules/Basic/SendScalarModuleState.h>
-//#include <Interface/Modules/Base/ModuleDialogGeneric.h>
-
-#include <Interface/Modules/Render/namespaces.h>
+#ifndef Q_MOC_RUN
+#include <Core/Datatypes/DatatypeFwd.h>
+#include <boost/atomic.hpp>
+#endif
+#include <QGraphicsView>
 #include <Interface/Modules/Render/share.h>
 
 namespace SCIRun {
   namespace Gui {
     class ViewSceneDialog;
-    
+
     class LightControlCircle : public QGraphicsView
     {
       Q_OBJECT
     public:
-      explicit LightControlCircle(QGraphicsScene* scene,
-        //SCIRun::Dataflow::Networks::ModuleStateHandle state,
+      explicit LightControlCircle(QGraphicsScene* scene, int index,
         const boost::atomic<bool>& pulling, QRectF sceneRect,
         QWidget* parent = nullptr);
 
       void setMovable(bool canMove);
-      QPointF getLightPosition();
+      QPointF getLightPosition() const;
+      QColor getColor() const;
 
     Q_SIGNALS:
-      void clicked(int x, int y);
+      void lightMoved(int index);
+      void colorChanged(int index);
     protected:
       virtual void mousePressEvent(QMouseEvent* event) override;
       virtual void mouseMoveEvent(QMouseEvent* event) override;
 
     private:
-      int previousX, previousY;
+      int index_;
+      int previousX_, previousY_;
       QGraphicsItem* boundingCircle_;
       QGraphicsItem* lightPosition_;
       const boost::atomic<bool>& dialogPulling_;
+      QColor lightColor_;
 
+      void selectLightColor();
+      void setColor(const QColor& color);
+
+    };
+
+    class VisibleItemManager : public QObject
+    {
+      Q_OBJECT
+    public:
+      explicit VisibleItemManager(QListWidget* itemList) : itemList_(itemList) {}
+      std::vector<QString> synchronize(const std::vector<Core::Datatypes::GeometryBaseHandle>& geomList);
+      bool isVisible(const QString& name) const;
+      bool containsItem(const QString& name) const;
+    public Q_SLOTS:
+      void addRenderItem(const QString& name, bool checked);
+      void removeRenderItem(const QString& name);
+      void clear();
+    Q_SIGNALS:
+      void visibleItemChange();
+    private Q_SLOTS:
+      void slotChanged(QListWidgetItem* item);
+      void selectAllClicked();
+      void deselectAllClicked();
+    private:
+      QListWidget* itemList_;
     };
 
     class SCISHARE ViewSceneControlsDock : public QDockWidget, public Ui::ViewSceneControls
@@ -88,24 +113,17 @@ namespace SCIRun {
       void updateZoomOptionVisibility();
       void updatePlaneSettingsDisplay(bool visible, bool showPlane, bool reverseNormal);
       void updatePlaneControlDisplay(double x, double y, double z, double d);
-      QPointF getLightPosition(int index);
+      QPointF getLightPosition(int index) const;
+      QColor getLightColor(int index) const;
 
-    public Q_SLOTS:
-      void addItem(const QString& name, bool checked); 
-      void removeItem(const QString& name);
-      void removeAllItems();
-    Q_SIGNALS:
-      void itemSelected(const QString& name);
-      void itemUnselected(const QString& name);
-    private Q_SLOTS:
-      void slotChanged(QListWidgetItem* item);
+      VisibleItemManager& visibleItems() { return *visibleItems_; }
 
     private:
       void setupObjectListWidget();
-      void setupLightControlCircle(QFrame* frame, const boost::atomic<bool>& pulling, bool moveable);
+      void setupLightControlCircle(QFrame* frame, int index, const boost::atomic<bool>& pulling, bool moveable);
 
-      std::vector<QListWidgetItem*> items_;
       std::vector<LightControlCircle*> lightControls_;
+      std::unique_ptr<VisibleItemManager> visibleItems_;
     };
   }
 }

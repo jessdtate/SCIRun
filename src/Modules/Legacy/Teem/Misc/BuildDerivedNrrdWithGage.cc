@@ -27,11 +27,9 @@
 */
 
 /*
- *  MiscProbe.cc:
  *
  *  Written by:
  *   Anastasia Mironova
- *   TODAYS DATE HERE
  *
  * TODO:
  * - take input from GUI to set gageKind;
@@ -57,7 +55,7 @@ using namespace SCIRun::Modules::Teem;
 using namespace SCIRun::Dataflow::Networks;
 using namespace SCIRun::Core::Algorithms::Teem;
 
-const ModuleLookupInfo BuildDerivedNrrdWithGage::staticInfo_("BuildDerivedNrrdWithGage", "Misc", "Teem");
+MODULE_INFO_DEF(BuildDerivedNrrdWithGage, Misc, Teem)
 
 ALGORITHM_PARAMETER_DEF(Teem, FieldKind);
 ALGORITHM_PARAMETER_DEF(Teem, OType);
@@ -85,6 +83,22 @@ BuildDerivedNrrdWithGage::BuildDerivedNrrdWithGage():
 void BuildDerivedNrrdWithGage::setStateDefaults()
 {
   //setStateStringFromAlgo(Parameters::DataLabel);
+  auto state = get_state();
+  state->setValue(Parameters::FieldKind, std::string("Scalar"));
+  state->setValue(Parameters::Quantity, std::string("value"));
+  state->setValue(Parameters::OType, std::string("double"));
+  state->setValue(Parameters::ValuesType, std::string("zero"));
+  state->setValue(Parameters::DType, std::string("zero"));
+  state->setValue(Parameters::DDType, std::string("zero"));
+  state->setValue(Parameters::ValuesNumParm1, std::string());
+  state->setValue(Parameters::ValuesNumParm2, std::string());
+  state->setValue(Parameters::ValuesNumParm3, std::string());
+  state->setValue(Parameters::DNumParm1, std::string());
+  state->setValue(Parameters::DNumParm2, std::string());
+  state->setValue(Parameters::DNumParm3, std::string());
+  state->setValue(Parameters::DDNumParm1, std::string());
+  state->setValue(Parameters::DDNumParm2, std::string());
+  state->setValue(Parameters::DDNumParm3, std::string());
 }
 
 #if 0

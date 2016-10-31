@@ -91,11 +91,13 @@ namespace SCIRun {
         OUTPUT_PORT(1, Transformation_Widget, GeometryObject);
         OUTPUT_PORT(2, Transformation_Matrix, Matrix);
 
-        static const Dataflow::Networks::ModuleLookupInfo staticInfo_;
+        MODULE_TRAITS_AND_INFO(ModuleHasUI)
+
       private:
         void executeImpl(FieldHandle f);
         void clear_vals();
         void update_input_attributes(FieldHandle);
+        void updateOutputAttributes(const Core::Geometry::BBox& box);
         void build_widget(FieldHandle, bool reset);
         bool isBoxEmpty() const;
         void widget_moved(bool);
@@ -103,10 +105,12 @@ namespace SCIRun {
         void setBoxRestrictions();
         Core::Datatypes::GeometryBaseHandle buildGeometryObject();
         void processWidgetFeedback(const Core::Datatypes::ModuleFeedback& var);
+        void adjustGeometryFromTransform(const Core::Geometry::Transform& transformMatrix);
         SCIRun::Core::Geometry::BBox bbox_;
 
         BoxWidgetPtr box_;
         boost::shared_ptr<EditMeshBoundingBoxImpl> impl_;
+        bool widgetMoved_;
       };
     }
   }

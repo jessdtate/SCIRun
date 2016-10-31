@@ -59,6 +59,7 @@ namespace SCIRun
         public HasNoInputPorts,
         public Has1OutputPort<ColorMapPortTag>
       {
+        CONVERTED_VERSION_OF_MODULE(CreateStandardColorMaps)
       public:
         CreateStandardColorMap();
         virtual void execute() override;
@@ -66,7 +67,7 @@ namespace SCIRun
 
         OUTPUT_PORT(0, ColorMapObject, ColorMap);
 
-        const static Dataflow::Networks::ModuleLookupInfo staticInfo_;
+        MODULE_TRAITS_AND_INFO(ModuleHasUI)
       };
     }
   }

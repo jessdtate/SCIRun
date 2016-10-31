@@ -70,7 +70,7 @@ namespace
 //------------------------------------------------------------------------------
 ViewSceneDialog::ViewSceneDialog(const std::string& name, ModuleStateHandle state,
   QWidget* parent /* = 0 */)
-  : ModuleDialogGeneric(state, parent), mConfigurationDock(nullptr), shown_(false), itemValueChanged_(true),
+  : ModuleDialogGeneric(state, parent), mConfigurationDock(nullptr), shown_(false),
   shiftdown_(false), selected_(false),
   clippingPlaneIndex_(0),screenshotTaker_(nullptr), saveScreenshotOnNewGeometry_(false),
   gid_(new DialogIdGenerator(name))
@@ -81,7 +81,7 @@ ViewSceneDialog::ViewSceneDialog(const std::string& name, ModuleStateHandle stat
   setFocusPolicy(Qt::StrongFocus);
 
   addToolBar();
-  setupClippingPlanes(); 
+  setupClippingPlanes();
   setupScaleBar();
 
   // Setup Qt OpenGL widget.
@@ -94,7 +94,7 @@ ViewSceneDialog::ViewSceneDialog(const std::string& name, ModuleStateHandle stat
 
   mGLWidget = new GLWidget(new QtGLContext(fmt), parentWidget());
   connect(mGLWidget, SIGNAL(fatalError(const QString&)), this, SIGNAL(fatalError(const QString&)));
-  connect(this, SIGNAL(mousePressSignalForTestingGeometryObjectFeedback(int, int)), this, SLOT(sendGeometryFeedbackToState(int, int)));
+  connect(this, SIGNAL(mousePressSignalForTestingGeometryObjectFeedback(int, int, const std::string&)), this, SLOT(sendGeometryFeedbackToState(int, int, const std::string&)));
 
   if (mGLWidget->isValid())
   {
@@ -129,28 +129,68 @@ ViewSceneDialog::ViewSceneDialog(const std::string& name, ModuleStateHandle stat
   {
     //Set background Color
     auto colorStr = state_->getValue(Modules::Render::ViewScene::BackgroundColor).toString();
-    if (!colorStr.empty())
-    {
-      ColorRGB color(colorStr);
-      bgColor_ = QColor(static_cast<int>(color.r() > 1 ? color.r() : color.r() * 255.0),
-        static_cast<int>(color.g() > 1 ? color.g() : color.g() * 255.0),
-        static_cast<int>(color.b() > 1 ? color.b() : color.b() * 255.0));
-    }
-    else
-    {
-      bgColor_ = Qt::black;
-    }
+    bgColor_ = checkColorSetting(colorStr, Qt::black);
+
     auto spire = mSpire.lock();
     spire->setBackgroundColor(bgColor_);
   }
 
-  state->connect_state_changed(boost::bind(&ViewSceneDialog::newGeometryValueForwarder, this));
+  setInitialLightValues();
+
+  state->connectStateChanged(boost::bind(&ViewSceneDialog::newGeometryValueForwarder, this));
   connect(this, SIGNAL(newGeometryValueForwarder()), this, SLOT(newGeometryValue()));
 
   std::string filesystemRoot = Application::Instance().executablePath().string();
   std::string sep;
   sep += boost::filesystem::path::preferred_separator;
   Modules::Visualization::TextBuilder::setFSStrings(filesystemRoot, sep);
+}
+
+
+void ViewSceneDialog::setInitialLightValues()
+{
+  auto light0str = state_->getValue(Modules::Render::ViewScene::HeadLightColor).toString();
+  QColor light0 = checkColorSetting(light0str, Qt::white);
+
+  auto light1str = state_->getValue(Modules::Render::ViewScene::Light1Color).toString();
+  QColor light1 = checkColorSetting(light1str, Qt::white);
+
+  auto light2str = state_->getValue(Modules::Render::ViewScene::Light2Color).toString();
+  QColor light2 = checkColorSetting(light2str, Qt::white);
+
+  auto light3str = state_->getValue(Modules::Render::ViewScene::Light3Color).toString();
+  QColor light3 = checkColorSetting(light3str, Qt::white);
+
+  auto spire = mSpire.lock();
+  if (spire)
+  {
+    spire->setLightColor(0, light0.redF(), light0.greenF(), light0.blueF());
+    spire->setLightColor(1, light1.redF(), light1.greenF(), light1.blueF());
+    spire->setLightColor(2, light2.redF(), light2.greenF(), light2.blueF());
+    spire->setLightColor(3, light3.redF(), light3.greenF(), light3.blueF());
+
+    spire->setLightOn(0, state_->getValue(Modules::Render::ViewScene::HeadLightOn).toBool());
+    spire->setLightOn(1, state_->getValue(Modules::Render::ViewScene::Light1On).toBool());
+    spire->setLightOn(2, state_->getValue(Modules::Render::ViewScene::Light2On).toBool());
+    spire->setLightOn(3, state_->getValue(Modules::Render::ViewScene::Light3On).toBool());
+  }
+}
+
+QColor ViewSceneDialog::checkColorSetting(std::string& rgb, QColor defaultColor)
+{
+  QColor newColor;
+  if (!rgb.empty())
+  {
+    ColorRGB color(rgb);
+    newColor = QColor(static_cast<int>(color.r() > 1 ? color.r() : color.r() * 255.0),
+      static_cast<int>(color.g() > 1 ? color.g() : color.g() * 255.0),
+      static_cast<int>(color.b() > 1 ? color.b() : color.b() * 255.0));
+  }
+  else
+  {
+    newColor = defaultColor;
+  }
+  return newColor;
 }
 
 void ViewSceneDialog::mousePressEvent(QMouseEvent* event)
@@ -162,7 +202,7 @@ void ViewSceneDialog::mousePressEvent(QMouseEvent* event)
   }
 }
 
-void ViewSceneDialog::restoreObjColor()
+std::string ViewSceneDialog::restoreObjColor()
 {
   LOG_DEBUG("ViewSceneDialog::asyncExecute before locking");
 
@@ -172,10 +212,10 @@ void ViewSceneDialog::restoreObjColor()
 
   auto spire = mSpire.lock();
   if (!spire)
-    return;
+    return "";
 
   std::string selName = spire->getSelection();
-  if (selName != "")
+  if (!selName.empty())
   {
     auto geomDataTransient = state_->getTransientValue(Parameters::GeomData);
     if (geomDataTransient && !geomDataTransient->empty())
@@ -184,7 +224,7 @@ void ViewSceneDialog::restoreObjColor()
       if (!geomData)
       {
         LOG_DEBUG("Logical error: ViewSceneDialog received an empty list.");
-        return;
+        return "";
       }
       for (auto it = geomData->begin(); it != geomData->end(); ++it)
       {
@@ -207,6 +247,7 @@ void ViewSceneDialog::restoreObjColor()
       }
     }
   }
+  return selName;
 }
 
 void ViewSceneDialog::mouseReleaseEvent(QMouseEvent* event)
@@ -214,10 +255,9 @@ void ViewSceneDialog::mouseReleaseEvent(QMouseEvent* event)
   if (selected_)
   {
     selected_ = false;
-    restoreObjColor();
+    auto selName = restoreObjColor();
     newGeometryValue();
-    //std::cout << "mousePressSignalForTestingGeometryObjectFeedback\n";
-    Q_EMIT mousePressSignalForTestingGeometryObjectFeedback(event->x(), event->y());
+    Q_EMIT mousePressSignalForTestingGeometryObjectFeedback(event->x(), event->y(), selName);
   }
 }
 
@@ -255,9 +295,9 @@ void ViewSceneDialog::keyReleaseEvent(QKeyEvent* event)
   }
 }
 
+//TODO: refactor duplication!!!
 void ViewSceneDialog::selectObject(const int x, const int y)
 {
-  //newGeometryValue
   LOG_DEBUG("ViewSceneDialog::asyncExecute before locking");
 
   Guard lock(Modules::Render::ViewScene::mutex_.get());
@@ -273,6 +313,7 @@ void ViewSceneDialog::selectObject(const int x, const int y)
   auto geomDataTransient = state_->getTransientValue(Parameters::GeomData);
   if (geomDataTransient && !geomDataTransient->empty())
   {
+    int port = 0;
     auto geomData = transient_value_cast<Modules::Render::ViewScene::GeomListPtr>(geomDataTransient);
     if (!geomData)
     {
@@ -288,24 +329,29 @@ void ViewSceneDialog::selectObject(const int x, const int y)
     //getting geom list
     std::list<GeometryHandle> objList;
 
-    for (auto it = geomData->begin(); it != geomData->end(); ++it)
+    for (auto it = geomData->begin(); it != geomData->end(); ++it, ++port)
     {
-      auto obj = *it;
-      auto realObj = boost::dynamic_pointer_cast<GeometryObjectSpire>(obj);
-      if (realObj)
+      // Check if object is visible
+      auto obj = *it; auto name = obj->uniqueID();
+      auto displayName = QString::fromStdString(name).split('_').at(1);
+      if (mConfigurationDock->visibleItems().isVisible(displayName))
       {
-        //filter objs
-        bool isWidget = false;
-        for (auto& pass : realObj->mPasses)
+        auto realObj = boost::dynamic_pointer_cast<GeometryObjectSpire>(obj);
+        if (realObj)
         {
-          if (pass.renderState.get(RenderState::IS_WIDGET))
+          //filter objs
+          bool isWidget = false;
+          for (auto& pass : realObj->mPasses)
           {
-            isWidget = true;
-            break;
+            if (pass.renderState.get(RenderState::IS_WIDGET))
+            {
+              isWidget = true;
+              break;
+            }
           }
+          if (isWidget)
+            objList.push_back(realObj);
         }
-        if (isWidget)
-          objList.push_back(realObj);
       }
     }
 
@@ -355,124 +401,60 @@ void ViewSceneDialog::closeEvent(QCloseEvent *evt)
 
 void ViewSceneDialog::newGeometryValue()
 {
-  LOG_DEBUG("ViewSceneDialog::asyncExecute before locking");
-
   Guard lock(Modules::Render::ViewScene::mutex_.get());
-
-  LOG_DEBUG("ViewSceneDialog::asyncExecute after locking");
 
   auto spire = mSpire.lock();
   if (!spire)
     return;
   spire->removeAllGeomObjects();
 
-  int port = 0;
-  std::vector<std::string> objectNames;
+  std::vector<QString> displayNames;
   std::vector<std::string> validObjects;
+  std::vector<GeometryBaseHandle> allGeoms;
+
   // Grab the geomData transient value.
   auto geomDataTransient = state_->getTransientValue(Parameters::GeomData);
   if (geomDataTransient && !geomDataTransient->empty())
   {
-    auto geomData = transient_value_cast<Modules::Render::ViewScene::GeomListPtr>(geomDataTransient);
-    if (!geomData)
+    auto portGeometries = transient_value_cast<Modules::Render::ViewScene::GeomListPtr>(geomDataTransient);
+    if (!portGeometries)
     {
       LOG_DEBUG("Logical error: ViewSceneDialog received an empty list.");
       return;
     }
-    //if (!spire)
-    //{
-    //  LOG_DEBUG("Logical error: Spire lock not acquired.");
-    //  return;
-    //}
+    std::copy(portGeometries->begin(), portGeometries->end(), std::back_inserter(allGeoms));
+  }
 
-    for (auto it = geomData->begin(); it != geomData->end(); ++it, ++port)
+  if (scaleBarGeom_ && scaleBar_.visible)
+  {
+    allGeoms.push_back(scaleBarGeom_);
+  }
+
+  for (auto& plane : clippingPlaneGeoms_)
+  {
+    allGeoms.push_back(plane);
+  }
+
+  displayNames = mConfigurationDock->visibleItems().synchronize(allGeoms);
+  int port = 0;
+  for (auto it = allGeoms.begin(); it != allGeoms.end(); ++it, ++port)
+  {
+    auto obj = *it;
+    auto name = displayNames[port];
+    if (mConfigurationDock->visibleItems().isVisible(name))
     {
-      auto obj = *it;
-      auto name = obj->uniqueID();
-      auto displayName = QString::fromStdString(name).split('_').at(1);
-      objectNames.push_back(displayName.toStdString());
-      if (!isObjectUnselected(displayName.toStdString()))
+      auto realObj = boost::dynamic_pointer_cast<GeometryObjectSpire>(obj);
+      if (realObj)
       {
-        auto realObj = boost::dynamic_pointer_cast<GeometryObjectSpire>(obj);
-        if (realObj)
-        {
-          spire->handleGeomObject(realObj, port);
-          validObjects.push_back(name);
-        }
+        spire->handleGeomObject(realObj, port);
+        validObjects.push_back(obj->uniqueID());
       }
     }
   }
-
-  //add objects of its own
-  //scale bar
-  ++port;
-  if (scaleBar_.visible && scaleBarGeom_)
-  {
-    auto name = scaleBarGeom_->uniqueID();
-    auto displayName = QString::fromStdString(name).split('_').at(1);
-    objectNames.push_back(name/*displayName.toStdString()*/);
-      auto realObj = boost::dynamic_pointer_cast<GeometryObjectSpire>(scaleBarGeom_);
-    if (realObj)
-    {
-      spire->handleGeomObject(realObj, port);
-      validObjects.push_back(name);
-    }
-  }
-  ++port;
-  //clippingplanes
-  for (auto i : clippingPlaneGeoms_)
-  {
-    auto name = i->uniqueID();
-    auto displayName = QString::fromStdString(name).split('_').at(1);
-    objectNames.push_back(name/*displayName.toStdString()*/);
-      auto realObj = boost::dynamic_pointer_cast<GeometryObjectSpire>(i);
-    if (realObj)
-    {
-      spire->handleGeomObject(realObj, port);
-      validObjects.push_back(name);
-    }
-  }
-
   if (!validObjects.empty())
     spire->gcInvalidObjects(validObjects);
 
-  if (!objectNames.empty())
-  {
-    sort(objectNames.begin(), objectNames.end());
-    if (previousObjectNames_ != objectNames)
-    {
-      itemValueChanged_ = true;
-      previousObjectNames_ = objectNames;
-    }
-    if (itemValueChanged_ && mConfigurationDock)
-    {
-      mConfigurationDock->removeAllItems();
-      for (auto it = objectNames.begin(); it != objectNames.end(); ++it)
-      {
-        std::string name = *it;
-        if (isObjectUnselected(name))
-        {
-          mConfigurationDock->addItem(QString::fromStdString(name), false);
-        }
-        else
-        {
-          mConfigurationDock->addItem(QString::fromStdString(name), true);
-        }
-      }
-      itemValueChanged_ = false;
-    }
-
-  }
-  //else
-  //{
-  //  if (!spire)
-  //    return;
-  //  spire->removeAllGeomObjects();
-  //}
-
-#ifdef BUILD_TESTING
   sendScreenshotDownstreamForTesting();
-#endif
 
   if (saveScreenshotOnNewGeometry_)
   {
@@ -481,39 +463,6 @@ void ViewSceneDialog::newGeometryValue()
 
   //TODO IMPORTANT: we need some call somewhere to clear the transient geometry list once spire/ES has received the list of objects. They take up lots of memory...
   //state_->setTransientValue(Parameters::GeomData, boost::shared_ptr<std::list<boost::shared_ptr<Core::Datatypes::GeometryObject>>>(), false);
-}
-
-void ViewSceneDialog::newOwnGeometryValue()
-{
-  LOG_DEBUG("ViewSceneDialog::asyncExecute before locking");
-
-  Guard lock(Modules::Render::ViewScene::mutex_.get());
-
-  LOG_DEBUG("ViewSceneDialog::asyncExecute after locking");
-
-  auto spire = mSpire.lock();
-  if (!spire)
-    return;
-
-  int port = 0;
-  std::vector<std::string> objectNames;
-  std::vector<std::string> validObjects;
-  //add objects of its own
-  //scale bar
-  if (scaleBar_.visible && scaleBarGeom_)
-  {
-    auto name = scaleBarGeom_->uniqueID();
-    auto displayName = QString::fromStdString(name).split('_').at(1);
-    objectNames.push_back(displayName.toStdString());
-    auto realObj = boost::dynamic_pointer_cast<GeometryObjectSpire>(scaleBarGeom_);
-    if (realObj)
-    {
-      spire->handleGeomObject(realObj, port);
-      validObjects.push_back(name);
-    }
-  }
-  spire->gcInvalidObjects(validObjects);
-
 }
 
 //------------------------------------------------------------------------------
@@ -567,7 +516,6 @@ void ViewSceneDialog::showAxisChecked(bool value)
 {
   //TODO: Add to SRInterface
 }
-
 
 //------------------------------------------------------------------------------
 void ViewSceneDialog::viewBarButtonClicked()
@@ -736,19 +684,7 @@ void ViewSceneDialog::lookDownAxisZ(int upIndex, glm::vec3& up)
 //------------------------------------------------------------------------------
 void ViewSceneDialog::configurationButtonClicked()
 {
-  if (!mConfigurationDock)
-  {
-    addConfigurationDock(windowTitle());
-    mConfigurationDock->setSampleColor(bgColor_);
-    mConfigurationDock->setScaleBarValues(scaleBar_.visible, scaleBar_.fontSize, scaleBar_.length, scaleBar_.height,
-      scaleBar_.multiplier, scaleBar_.numTicks, scaleBar_.visible, QString::fromStdString(scaleBar_.unit));
-    setupMaterials();
-    newGeometryValue();
-  }
-
-  showConfiguration_ = !mConfigurationDock->isVisible();
-  mConfigurationDock->setEnabled(showConfiguration_);
-  mConfigurationDock->setVisible(showConfiguration_);
+  mConfigurationDock->setVisible(!mConfigurationDock->isVisible());
 }
 
 //------------------------------------------------------------------------------
@@ -793,38 +729,6 @@ void ViewSceneDialog::setTransparencySortTypeLists(bool index)
 {
   std::shared_ptr<SRInterface> spire = mSpire.lock();
   spire->setTransparencyRendertype(RenderState::TransparencySortType::LISTS_SORT);
-  newGeometryValue();
-}
-
-//------------------------------------------------------------------------------
-void ViewSceneDialog::handleUnselectedItem(const QString& name)
-{
-  itemValueChanged_ = true;
-  unselectedObjectNames_.push_back(name.toStdString());
-  newGeometryValue();
-}
-
-//------------------------------------------------------------------------------
-void ViewSceneDialog::handleSelectedItem(const QString& name)
-{
-  itemValueChanged_ = true;
-  unselectedObjectNames_.erase(remove(unselectedObjectNames_.begin(), unselectedObjectNames_.end(), name.toStdString()), unselectedObjectNames_.end());
-  newGeometryValue();
-}
-
-//------------------------------------------------------------------------------
-void ViewSceneDialog::selectAllClicked()
-{
-  itemValueChanged_ = true;
-  unselectedObjectNames_.clear();
-  newGeometryValue();
-}
-
-//------------------------------------------------------------------------------
-void ViewSceneDialog::deselectAllClicked()
-{
-  itemValueChanged_ = true;
-  unselectedObjectNames_ = previousObjectNames_;
   newGeometryValue();
 }
 
@@ -1166,8 +1070,7 @@ GeometryHandle ViewSceneDialog::buildGeometryScaleBar()
   }
 
   ss.str("");
-  ss << "scale_bar" << scaleBar_.fontSize << scaleBar_.length <<
-    scaleBar_.height << scaleBar_.numTicks << scaleBar_.projLength;
+  ss << "_scaleBar::" << scaleBar_.fontSize << scaleBar_.length << scaleBar_.height << scaleBar_.numTicks << scaleBar_.projLength;
   std::string uniqueNodeID = ss.str();
   std::string vboName = uniqueNodeID + "VBO";
   std::string iboName = uniqueNodeID + "IBO";
@@ -1244,9 +1147,6 @@ void ViewSceneDialog::updateScaleBarLength()
     glm::vec2 pp(p.x*width / 2.0,
       p.y*height / 2.0);
     scaleBar_.projLength = glm::length(pp);
-    //std::cout << "p1:\t" << p1.x << "\t" << p1.y << "\t" << p1.z << "\t" << p1.w << "\n";
-    //std::cout << "p2:\t" << p2.x << "\t" << p2.y << "\t" << p2.z << "\t" << p2.w << "\n";
-    //std::cout << "pp:\t" << pp.x << "\t" << pp.y << "\n";
   }
 }
 
@@ -1418,18 +1318,92 @@ void ViewSceneDialog::setFieldOfView(int value)
   state_->setValue(Modules::Render::ViewScene::FieldOfView, value);
 }
 
-//------------------------------------------------------------------------------
-bool ViewSceneDialog::isObjectUnselected(const std::string& name)
+void ViewSceneDialog::setLightPosition(int index)
 {
-  return std::find(unselectedObjectNames_.begin(), unselectedObjectNames_.end(), name) != unselectedObjectNames_.end();
+  auto spire = mSpire.lock();
+  if (spire)
+    spire->setLightPosition(index, mConfigurationDock->getLightPosition(index).x(), mConfigurationDock->getLightPosition(index).y());
+}
+
+void ViewSceneDialog::setLightColor(int index)
+{
+  QColor lightColor(mConfigurationDock->getLightColor(index));
+  switch (index)
+  {
+  case 0:
+    state_->setValue(Modules::Render::ViewScene::HeadLightColor, ColorRGB(lightColor.red(), lightColor.green(), lightColor.blue()).toString());
+    break;
+  case 1:
+    state_->setValue(Modules::Render::ViewScene::Light1Color, ColorRGB(lightColor.red(), lightColor.green(), lightColor.blue()).toString());
+    break;
+  case 2:
+    state_->setValue(Modules::Render::ViewScene::Light2Color, ColorRGB(lightColor.red(), lightColor.green(), lightColor.blue()).toString());
+    break;
+  case 3:
+    state_->setValue(Modules::Render::ViewScene::Light3Color, ColorRGB(lightColor.red(), lightColor.green(), lightColor.blue()).toString());
+    break;
+  default:
+    return;
+  }
+
+  auto spire = mSpire.lock();
+  if (spire)
+    spire->setLightColor(index, lightColor.redF(), lightColor.greenF(), lightColor.blueF());
+}
+
+
+void ViewSceneDialog::toggleHeadLight(bool value)
+{
+  toggleLightOnOff(0, value);
+}
+
+void ViewSceneDialog::toggleLight1(bool value)
+{
+  toggleLightOnOff(1, value);
+}
+
+void ViewSceneDialog::toggleLight2(bool value)
+{
+  toggleLightOnOff(2, value);
+}
+
+void ViewSceneDialog::toggleLight3(bool value)
+{
+  toggleLightOnOff(3, value);
+}
+
+void ViewSceneDialog::toggleLightOnOff(int index, bool value)
+{
+  switch (index)
+  {
+  case 0:
+    state_->setValue(Modules::Render::ViewScene::HeadLightOn, value);
+    break;
+  case 1:
+    state_->setValue(Modules::Render::ViewScene::Light1On, value);
+    break;
+  case 2:
+    state_->setValue(Modules::Render::ViewScene::Light2On, value);
+    break;
+  case 3:
+    state_->setValue(Modules::Render::ViewScene::Light3On, value);
+    break;
+  default:
+    return;
+  }
+
+  auto spire = mSpire.lock();
+  if (spire)
+    spire->setLightOn(index, value);
 }
 
 void ViewSceneDialog::addToolBar()
 {
   mToolBar = new QToolBar(this);
-  mToolBar->setStyleSheet("QToolBar { background-color: rgb(66,66,69); border: 1px solid black; color: black }");
+  WidgetStyleMixin::toolbarStyle(mToolBar);
 
   addConfigurationButton();
+  addConfigurationDock();
   addAutoViewButton();
   addScreenshotButton();
   //addObjectToggleMenu();
@@ -1537,14 +1511,17 @@ void ViewSceneDialog::addConfigurationButton()
   mToolBar->addSeparator();
 }
 
-void ViewSceneDialog::addConfigurationDock(const QString& viewName)
+void ViewSceneDialog::addConfigurationDock()
 {
-  QString name = viewName + " Configuration";
+  QString name = windowTitle() + " Configuration";
   mConfigurationDock = new ViewSceneControlsDock(name, this);
   mConfigurationDock->setHidden(true);
   mConfigurationDock->setVisible(false);
 
-  showConfiguration_ = false;
+    mConfigurationDock->setSampleColor(bgColor_);
+    mConfigurationDock->setScaleBarValues(scaleBar_.visible, scaleBar_.fontSize, scaleBar_.length, scaleBar_.height,
+      scaleBar_.multiplier, scaleBar_.numTicks, scaleBar_.visible, QString::fromStdString(scaleBar_.unit));
+    setupMaterials();
 }
 
 void ViewSceneDialog::setupClippingPlanes()
@@ -1577,7 +1554,7 @@ void ViewSceneDialog::setupMaterials()
     mConfigurationDock->setMaterialTabValues(
       state_->getValue(Modules::Render::ViewScene::Ambient).toDouble(),
       state_->getValue(Modules::Render::ViewScene::Diffuse).toDouble(),
-      state_->getValue(Modules::Render::ViewScene::Specular).toDouble(), 
+      state_->getValue(Modules::Render::ViewScene::Specular).toDouble(),
       state_->getValue(Modules::Render::ViewScene::Shine).toDouble(),
       state_->getValue(Modules::Render::ViewScene::Emission).toDouble(),
       state_->getValue(Modules::Render::ViewScene::FogOn).toBool(),
@@ -1643,18 +1620,6 @@ void ViewSceneDialog::setupRenderTabValues()
   }
 }
 
-void ViewSceneDialog::hideConfigurationDock()
-{
-  if (mConfigurationDock)
-  {
-    showConfiguration_ = mConfigurationDock->isVisible();
-    if (showConfiguration_)
-    {
-      configurationButtonClicked();
-    }
-  }
-}
-
 void ViewSceneDialog::showEvent(QShowEvent* evt)
 {
   if (!shown_)
@@ -1668,7 +1633,7 @@ void ViewSceneDialog::showEvent(QShowEvent* evt)
 
 void ViewSceneDialog::hideEvent(QHideEvent* evt)
 {
-  hideConfigurationDock();
+  mConfigurationDock->setVisible(false);
   ModuleDialogGeneric::hideEvent(evt);
 }
 
@@ -1690,13 +1655,14 @@ namespace //TODO: move to appropriate location
   }
 }
 
-void ViewSceneDialog::sendGeometryFeedbackToState(int x, int y)
+void ViewSceneDialog::sendGeometryFeedbackToState(int x, int y, const std::string& selName)
 {
   std::shared_ptr<SRInterface> spire = mSpire.lock();
   glm::mat4 trans = spire->getWidgetTransform().transform;
 
   ViewSceneFeedback vsf;
   vsf.transform = toSciTransform(trans);
+  vsf.selectionName = selName;
   state_->setTransientValue(Parameters::GeometryFeedbackInfo, vsf);
 }
 
@@ -1718,7 +1684,6 @@ void ViewSceneDialog::sendScreenshotDownstreamForTesting()
 {
   //wait for a couple frames to go by.
 //  boost::this_thread::sleep(boost::posix_time::milliseconds(150));
-  //std::cout << "sendScreenshotDownstreamForTesting " << std::endl;
   takeScreenshot();
   state_->setTransientValue(Parameters::ScreenshotData, screenshotTaker_->toMatrix(), false);
 }

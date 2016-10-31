@@ -34,7 +34,7 @@ using namespace SCIRun::Modules::Basic;
 using namespace SCIRun::Core::Datatypes;
 using namespace SCIRun::Dataflow::Networks;
 
-const ModuleLookupInfo PortFeedbackSender::staticInfo_("PortFeedbackSender", "Testing", "SCIRun");
+MODULE_INFO_DEF(PortFeedbackSender, Testing, SCIRun)
 
 PortFeedbackSender::PortFeedbackSender()
   : Module(staticInfo_, false)
@@ -42,19 +42,29 @@ PortFeedbackSender::PortFeedbackSender()
   INITIALIZE_PORT(Input);
 }
 
-void PortFeedbackSender::execute()
+void PortFeedbackSender::setStateDefaults()
 {
- 
+
 }
 
-const ModuleLookupInfo PortFeedbackReceiver::staticInfo_("PortFeedbackReceiver", "Testing", "SCIRun");
+void PortFeedbackSender::execute()
+{
+
+}
+
+MODULE_INFO_DEF(PortFeedbackReceiver, Testing, SCIRun)
 
 PortFeedbackReceiver::PortFeedbackReceiver()
   : Module(staticInfo_, false)
 {
   INITIALIZE_PORT(Output);
 
-  getOutputPort(Output)->connectConnectionFeedbackListener([this](const ModuleFeedback& var) { processFeedback(var); });
+  //getOutputPort(Output)->connectConnectionFeedbackListener([this](const ModuleFeedback& var) { processFeedback(var); });
+}
+
+void PortFeedbackReceiver::setStateDefaults()
+{
+
 }
 
 void PortFeedbackReceiver::execute()

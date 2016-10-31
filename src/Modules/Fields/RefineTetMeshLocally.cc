@@ -6,7 +6,7 @@
    Copyright (c) 2015 Scientific Computing and Imaging Institute,
    University of Utah.
 
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
    to deal in the Software without restriction, including without limitation
@@ -27,7 +27,7 @@
 */
 /// @todo Documentation Modules/Legacy/Fields/RefineTetMeshLocally.cc
 
-#include <Core/Algorithms/Field/RefineTetMeshLocallyAlgorithm.h> 
+#include <Core/Algorithms/Field/RefineTetMeshLocallyAlgorithm.h>
 #include <Core/Datatypes/DenseMatrix.h>
 #include <Core/Datatypes/MatrixTypeConversions.h>
 #include <Core/Datatypes/Legacy/Field/Field.h>
@@ -46,10 +46,10 @@ using namespace SCIRun::Dataflow::Networks;
 using namespace SCIRun::Core::Datatypes;
 using namespace SCIRun;
 
-const ModuleLookupInfo RefineTetMeshLocally::staticInfo_("RefineTetMeshLocally", "ChangeMesh", "SCIRun"); 
+MODULE_INFO_DEF(RefineTetMeshLocally, ChangeMesh, SCIRun)
 
 RefineTetMeshLocally::RefineTetMeshLocally()
-		:Module(staticInfo_, true)
+		: Module(staticInfo_, true)
 {
   INITIALIZE_PORT(InputField);
   INITIALIZE_PORT(OutputField);
@@ -57,12 +57,13 @@ RefineTetMeshLocally::RefineTetMeshLocally()
 
 void RefineTetMeshLocally::setStateDefaults()
 {
- setStateDoubleFromAlgo(Parameters::RefineTetMeshLocallyIsoValue);	
- setStateDoubleFromAlgo(Parameters::RefineTetMeshLocallyEdgeLength);	
- setStateDoubleFromAlgo(Parameters::RefineTetMeshLocallyVolume);	
+ setStateDoubleFromAlgo(Parameters::RefineTetMeshLocallyIsoValue);
+ setStateDoubleFromAlgo(Parameters::RefineTetMeshLocallyEdgeLength);
+ setStateDoubleFromAlgo(Parameters::RefineTetMeshLocallyVolume);
  setStateDoubleFromAlgo(Parameters::RefineTetMeshLocallyDihedralAngleSmaller);
  setStateDoubleFromAlgo(Parameters::RefineTetMeshLocallyDihedralAngleBigger);
  setStateIntFromAlgo(Parameters::RefineTetMeshLocallyMaxNumberRefinementIterations);
+ setStateIntFromAlgo(Parameters::RefineTetMeshLocallyRadioButtons);
  setStateBoolFromAlgo(Parameters::RefineTetMeshLocallyDoNoSplitSurfaceTets);
  setStateBoolFromAlgo(Parameters::RefineTetMeshLocallyCounterClockWiseOrdering);
  setStateBoolFromAlgo(Parameters::RefineTetMeshLocallyUseModuleInputField);
@@ -70,13 +71,12 @@ void RefineTetMeshLocally::setStateDefaults()
 
 void RefineTetMeshLocally::execute()
 {
+  auto inputfield_ = getRequiredInput(InputField);
 
- FieldHandle inputfield_ = getRequiredInput(InputField);
-
-  if (needToExecute() )
+  if (needToExecute())
   {
     update_state(Executing);
-    
+
     setAlgoDoubleFromState(Parameters::RefineTetMeshLocallyIsoValue);
     setAlgoDoubleFromState(Parameters::RefineTetMeshLocallyEdgeLength);
     setAlgoDoubleFromState(Parameters::RefineTetMeshLocallyVolume);
@@ -87,9 +87,9 @@ void RefineTetMeshLocally::execute()
     setAlgoBoolFromState(Parameters::RefineTetMeshLocallyUseModuleInputField);
     setAlgoIntFromState(Parameters::RefineTetMeshLocallyMaxNumberRefinementIterations);
     auto RadioButton = (get_state()->getValue(Parameters::RefineTetMeshLocallyRadioButtons)).toInt();
-        if (RadioButton==-1)
-       RadioButton=0;
-    algo().set(Parameters::RefineTetMeshLocallyRadioButtons, RadioButton);      
+    if (RadioButton == -1)
+      RadioButton = 0;
+    algo().set(Parameters::RefineTetMeshLocallyRadioButtons, RadioButton);
     auto output = algo().run(withInputData((InputField, inputfield_)));
     sendOutputFromAlgorithm(OutputField, output);
   }

@@ -255,7 +255,7 @@ void PortWidget::turn_on_light()
   lightOn_ = true;
 }
 
-boost::optional<ConnectionId> PortWidget::firstConnectionId() const 
+boost::optional<ConnectionId> PortWidget::firstConnectionId() const
 {
   auto c = firstConnection();
   return c ? c->id() : boost::optional<ConnectionId>();
@@ -350,15 +350,40 @@ void PortWidget::doMouseRelease(Qt::MouseButton button, const QPointF& pos, Qt::
 
 void PortWidget::pickConnectModule()
 {
-  QInputDialog qid;
-  qid.setWindowTitle("Connect new module here");
-  qid.setLabelText("New module to connect:");
-  qid.setComboBoxItems(menu_->compatibleModules());
-  qid.setOption(QInputDialog::UseListViewForComboBoxItems, true);
-  auto ok = qid.exec();
-  if (ok == QDialog::Accepted)
+  if (isInput())
   {
-    menu_->portPicked(qid.textValue());
+    QInputDialog qid;
+    qid.setWindowTitle("Connect new module here");
+    qid.setLabelText("New module to connect:");
+    qid.setComboBoxItems(menu_->compatibleModules());
+    qid.setOption(QInputDialog::UseListViewForComboBoxItems, true);
+    if (qid.exec() == QDialog::Accepted)
+    {
+      menu_->portPicked(qid.textValue());
+    }
+  }
+  else
+  {
+    QDialog dialog;
+    dialog.setWindowTitle("Connect new module(s) here");
+    QVBoxLayout form(&dialog);
+    form.addWidget(new QLabel("New module(s) to connect:"));
+
+    QListWidget list;
+    list.addItems(menu_->compatibleModules());
+    list.setSelectionMode(QAbstractItemView::MultiSelection);
+    form.addWidget(&list);
+
+    QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, &dialog);
+    form.addWidget(&buttonBox);
+    connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+    connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+    if (dialog.exec() == QDialog::Accepted)
+    {
+      Q_FOREACH(QListWidgetItem* lineEdit, list.selectedItems())
+        menu_->portPicked(lineEdit->text());
+    }
   }
 }
 
@@ -414,20 +439,7 @@ void PortWidget::makeConnection(const QPointF& pos)
   {
     tryConnectPort(pos, (*connection)->receiver(), std::numeric_limits<double>::max());
   }
-  else
-  {
-    //qDebug() << "no highlighted port found";
-  }
   clearPotentialConnections();
-
-#if 0 // clean up later, might reuse closestPortFinder
-  else //old way
-  {
-    auto port = closestPortFinder_->closestPort(pos);  //GUI concern: needs unit test
-    if (port)
-      tryConnectPort(pos, port, PORT_CONNECTION_THRESHOLD);
-  }
-#endif
 }
 
 void PortWidget::clearPotentialConnections()
@@ -436,6 +448,9 @@ void PortWidget::clearPotentialConnections()
   for (auto& c : potentialConnections_)
     delete c;
   potentialConnections_.clear();
+  for (auto& t : potentialConnectionPortNames_)
+    delete t;
+  potentialConnectionPortNames_.clear();
 }
 
 void PortWidget::tryConnectPort(const QPointF& pos, PortWidget* port, double threshold)
@@ -465,7 +480,7 @@ void PortWidget::MakeTheConnection(const ConnectionDescription& cd)
 
 void PortWidget::connectionDisabled(bool disabled)
 {
-  Q_EMIT incomingConnectionStateChange(disabled);
+  Q_EMIT incomingConnectionStateChange(disabled, getIndex());
 }
 
 void PortWidget::setConnectionsDisabled(bool disabled)
@@ -568,8 +583,30 @@ void PortWidget::makePotentialConnectionLine(PortWidget* other)
     auto potential = connectionFactory_->makePotentialConnection(this);
     potential->update(other->position());
     potential->setReceiver(other);
+    auto label = other->makeNameLabel();
+    potential->setLabel(label);
     potentialConnections_.insert(potential);
+    potentialConnectionPortNames_.insert(label);
   }
+}
+
+QGraphicsTextItem* PortWidget::makeNameLabel() const
+{
+  auto portNameTextItem = new QGraphicsTextItem(name());
+  portNameTextItem->setDefaultTextColor(color());
+  portNameTextItem->setFont(QFont("Arial", 10));
+  if (isInput())
+  {
+    portNameTextItem->setRotation(-45);
+    portNameTextItem->setPos(getPositionObject()->currentPosition() + QPointF{ -10, -20 });
+  }
+  else
+  {
+    portNameTextItem->setRotation(45);
+    portNameTextItem->setPos(getPositionObject()->currentPosition());
+  }
+  connectionFactory_->activate(portNameTextItem);
+  return portNameTextItem;
 }
 
 void PortWidget::addConnection(ConnectionLine* c)
@@ -672,7 +709,7 @@ void PortWidget::insertNewModule(const PortDescriptionInterface* output, const s
 {
   setProperty(addNewModuleActionTypePropertyName(), sender()->property(addNewModuleActionTypePropertyName()));
   setProperty(insertNewModuleActionTypePropertyName(), QString::fromStdString(input->id().toString()));
-  
+
   Q_EMIT connectNewModule(output, newModuleName);
 }
 
@@ -724,4 +761,89 @@ std::vector<PortWidget*> PortWidget::connectedPorts() const
     otherPorts.push_back(notThisOne(ends));
   }
   return otherPorts;
+}
+
+QColor SCIRun::Gui::to_color(const std::string& str, int alpha)
+{
+  QColor result;
+  if (SCIRunMainWindow::Instance()->newInterface())
+  {
+    if (str == "red")
+      result = Qt::red;
+    else if (str == "blue")
+      result = QColor(14, 139, 255);
+    else if (str == "lightblue")
+      result = QColor(153, 204, 255);
+    else if (str == "darkBlue")
+      result = Qt::darkBlue;
+    else if (str == "cyan")
+      result = QColor(27, 207, 207);
+    else if (str == "darkCyan")
+      result = Qt::darkCyan;
+    else if (str == "darkGreen")
+      result = QColor(0, 175, 70);
+    else if (str == "cyan")
+      result = Qt::cyan;
+    else if (str == "magenta")
+      result = QColor(255, 75, 240);
+    else if (str == "white")
+      result = Qt::white;
+    else if (str == "yellow")
+      result = QColor(234, 255, 55);
+    else if (str == "darkYellow")
+      result = Qt::darkYellow;
+    else if (str == "lightGray")
+      result = Qt::lightGray;
+    else if (str == "darkGray")
+      result = Qt::darkGray;
+    else if (str == "black")
+      result = Qt::black;
+    else if (str == "purple")
+      result = QColor(122, 119, 226);
+    else if (str == "orange")
+      result = QColor(254, 139, 38);
+    else if (str == "brown")
+      result = QColor(160, 82, 45);
+    else
+      result = Qt::black;
+  }
+  else
+  {
+    if (str == "red")
+      result = Qt::red;
+    else if (str == "blue")
+      result = Qt::blue;
+    else if (str == "darkBlue")
+      result = Qt::darkBlue;
+    else if (str == "cyan")
+      result = Qt::cyan;
+    else if (str == "darkCyan")
+      result = Qt::darkCyan;
+    else if (str == "darkGreen")
+      result = Qt::darkGreen;
+    else if (str == "cyan")
+      result = Qt::cyan;
+    else if (str == "magenta")
+      result = Qt::magenta;
+    else if (str == "white")
+      result = Qt::white;
+    else if (str == "yellow")
+      result = Qt::yellow;
+    else if (str == "darkYellow")
+      result = Qt::darkYellow;
+    else if (str == "lightGray")
+      result = Qt::lightGray;
+    else if (str == "darkGray")
+      result = Qt::darkGray;
+    else if (str == "black")
+      result = Qt::black;
+    else if (str == "purple")
+      result = Qt::darkMagenta;
+    else if (str == "orange")
+      result = QColor(255, 165, 0);
+    else
+      result = Qt::black;
+  }
+  result.setAlpha(alpha);
+  return result;
 }
