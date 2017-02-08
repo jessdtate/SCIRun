@@ -46,8 +46,6 @@ DEALINGS IN THE SOFTWARE.
 #include <Core/Logging/LoggerInterface.h>
 #include <Core/Utils/Exception.h>
 
-namespace BioPSE
-{
 
 using namespace SCIRun;
 using namespace SCIRun::Core;
@@ -497,7 +495,3 @@ using namespace SCIRun::Core::Algorithms::Inverse;
     : regMethod_(regMethod), lambdaFromTextEntry_(lambdaFromTextEntry), lambdaSlider_(lambdaSlider), lambdaCount_(lambdaCount), lambdaMin_(lambdaMin), lambdaMax_(lambdaMax),
     updateLCurveGui_(updateLCurveGui)
     {}
-
-
-
-} // End namespace BioPSE

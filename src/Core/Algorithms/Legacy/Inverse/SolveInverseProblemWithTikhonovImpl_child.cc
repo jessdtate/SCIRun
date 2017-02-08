@@ -55,6 +55,8 @@ using namespace SCIRun;
 using namespace SCIRun::Core;
 using namespace SCIRun::Core::Datatypes;
 using namespace SCIRun::Core::Logging;
+using namespace SCIRun::Core::Algorithms;
+using namespace SCIRun::Core::Algorithms::Inverse;
 
 //// Class Constructor
 /////////////

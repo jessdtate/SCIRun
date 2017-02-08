@@ -43,6 +43,7 @@
 #include <Core/Datatypes/DenseColumnMatrix.h>
 #include <Core/Logging/LoggerFwd.h>
 
+#include <Core/Algorithms/Base/AlgorithmBase.h>
 #include <Modules/Legacy/Inverse/share.h>
 
 namespace SCIRun
