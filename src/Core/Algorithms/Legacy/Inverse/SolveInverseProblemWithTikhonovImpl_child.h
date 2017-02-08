@@ -34,19 +34,14 @@
 #define BioPSE_SolveInverseProblemWithTikhonovChild_H__
 
 #include <vector>
-
 #include <boost/utility.hpp>
 #include <boost/function.hpp>
-
 #include <Core/Datatypes/MatrixFwd.h>
 #include <Core/Datatypes/DenseMatrix.h>
 #include <Core/Datatypes/DenseColumnMatrix.h>
 #include <Core/Logging/LoggerFwd.h>
-
-#include <Modules/Legacy/Inverse/share.h>
-
 #include <Core/Algorithms/Legacy/Inverse/TikhonovImplAbstractBase.h>
-
+#include <Core/Algorithms/Legacy/Inverse/share.h>
 namespace SCIRun
 {
 	namespace Core

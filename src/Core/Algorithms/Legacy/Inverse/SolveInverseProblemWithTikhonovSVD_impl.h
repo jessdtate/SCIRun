@@ -45,7 +45,7 @@
 
 #include <Core/Algorithms/Legacy/Inverse/TikhonovImplAbstractBase.h>
 
-#include <Modules/Legacy/Inverse/share.h>
+#include <Core/Algorithms/Legacy/Inverse/share.h>
 
 
 namespace SCIRun

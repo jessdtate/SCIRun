@@ -44,7 +44,7 @@
 #include <Core/Logging/LoggerFwd.h>
 
 #include <Core/Algorithms/Base/AlgorithmBase.h>
-#include <Modules/Legacy/Inverse/share.h>
+#include <Core/Algorithms/Legacy/Inverse/share.h>
 
 namespace SCIRun
 {
@@ -68,7 +68,7 @@ namespace SCIRun
 			    };
 			  }
 
-			  class SCISHARE TikhonovImplAbstractBase : boost::noncopyable
+			  class SCISHARE TikhonovImplAbstractBase : public TikhonovImplAbstractBase, boost::noncopyable
 			  {
 
 			  // PUBLIC MEMBERS OF CLASS TikhonovImplAbstractBase
