@@ -6,7 +6,7 @@
   Copyright (c) 2009 Scientific Computing and Imaging Institute,
   University of Utah.
 
-  
+
   Permission is hereby granted, free of charge, to any person obtaining a
   copy of this software and associated documentation files (the "Software"),
   to deal in the Software without restriction, including without limitation
@@ -33,8 +33,8 @@
 
 
 #include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonovSVD.h>
-#include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonovSVD_impl.h>
-#include <Modules/Legacy/Inverse/TikhonovImplAbstractBase.h>
+#include <Core/Algorithms/Legacy/Inverse/SolveInverseProblemWithTikhonovSVD_impl.h>
+#include <Core/Algorithms/Legacy/Inverse/TikhonovImplAbstractBase.h>
 #include <Core/Datatypes/MatrixTypeConversions.h>
 #include <Core/Datatypes/DenseColumnMatrix.h>
 #include <Core/Datatypes/Legacy/Field/Field.h>
@@ -55,27 +55,27 @@ void SolveInverseProblemWithTikhonovSVD::execute()
         auto forward_matrix_h = getRequiredInput(ForwardMatrix);
         auto hMatrixMeasDat = getRequiredInput(MeasuredPotentials);
 
-        
+
         const bool computeRegularizedInverse = oport_connected(InverseSolution);
-        
+
         if (needToExecute())
         {
-            
+
             using namespace BioPSE;
             auto state = get_state();
 
-            
+
             auto denseForward = castMatrix::toDense(forward_matrix_h);
             auto measuredDense = convertMatrix::toDense(hMatrixMeasDat);
-    
-            
+
+
             SolveInverseProblemWithTikhonovSVD_impl algo(   denseForward,
                                                             measuredDense,
                                                             computeRegularizedInverse,
                                                             this);
-            
+
             TikhonovImplAbstractBase::Input::lcurveGuiUpdate update = boost::bind(&SolveInverseProblemWithTikhonovSVD::update_lcurve_gui, this, _1, _2, _3);
-            
+
             TikhonovImplAbstractBase::Input input(
                                                     state->getValue(RegularizationMethod).toString(),
                                                     state->getValue(LambdaFromDirectEntry).toDouble(),
@@ -84,20 +84,20 @@ void SolveInverseProblemWithTikhonovSVD::execute()
                                                     state->getValue(LambdaMin).toDouble(),
                                                     state->getValue(LambdaMax).toDouble(),
                                                     update);
-            
-            
+
+
             algo.run(input);
-            
+
             if (computeRegularizedInverse)
             {
                 sendOutput(RegInverse, algo.get_inverse_matrix());
             }
-            
+
             sendOutput(InverseSolution, algo.get_inverse_solution());
-            
+
             sendOutput(RegularizationParameter, algo.get_regularization_parameter());
         }
-        
+
 }
 
 ///////////////////////////////////////
@@ -149,7 +149,7 @@ void SolveInverseProblemWithTikhonovSVD::update_lcurve_gui(const double lambda, 
     state->setValue(LambdaCorner, lambda);
     //estimate L curve corner
     const double lower_y = std::min(input.eta_[0] / 10.0, input.eta_[input.nLambda_ - 1]);
-    
+
     std::ostringstream str;
     str << get_id() << " plot_graph \" ";
     for (int i = 0; i < input.nLambda_; i++)
@@ -158,7 +158,7 @@ void SolveInverseProblemWithTikhonovSVD::update_lcurve_gui(const double lambda, 
     str << log10(input.rho_[lambda_index]) << " " << log10(input.eta_[lambda_index]) << " ";
     str << log10(input.rho_[lambda_index]) << " " << log10(lower_y) << " \" ";
     str << lambda << " " << lambda_index << " ; \n";
-    
+
     state->setValue(LCurveText, str.str());
 }
 
@@ -176,5 +176,3 @@ const AlgorithmParameterName SolveInverseProblemWithTikhonovSVD::TikhonovCase("T
 const AlgorithmParameterName SolveInverseProblemWithTikhonovSVD::LambdaSliderValue("LambdaSliderValue");
 const AlgorithmParameterName SolveInverseProblemWithTikhonovSVD::LambdaCorner("LambdaCorner");
 const AlgorithmParameterName SolveInverseProblemWithTikhonovSVD::LCurveText("LCurveText");
-
-

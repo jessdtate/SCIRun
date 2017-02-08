@@ -31,10 +31,9 @@
 #define MODULES_LEGACY_INVERSE_SolveInverseProblemWithTikhonovSVD_H__
 
 #include <Dataflow/Network/Module.h>
-#include <Modules/Legacy/Inverse/share.h>
 #include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonov.h>
 
-
+#include <Modules/Legacy/Inverse/share.h>
 
 namespace SCIRun {
   namespace Modules {
@@ -45,13 +44,13 @@ namespace SCIRun {
         public Has4InputPorts<MatrixPortTag, MatrixPortTag, MatrixPortTag, MatrixPortTag>,
         public Has3OutputPorts<MatrixPortTag, MatrixPortTag, MatrixPortTag>
       {
-          
+
       public:
-          
+
           SolveInverseProblemWithTikhonovSVD(); // constructor
           void execute();                       // execute
           virtual void setStateDefaults();      // default params
-          
+
 
           // define input ports
           INPUT_PORT(0, ForwardMatrix, Matrix);
@@ -61,14 +60,14 @@ namespace SCIRun {
 //          INPUT_PORT(4, MatrixU, Matrix);
 //          INPUT_PORT(5, MatrixS, Matrix);
 //          INPUT_PORT(6, MatrixV, Matrix);
-          
+
           OUTPUT_PORT(0, InverseSolution, Matrix);
           OUTPUT_PORT(1, RegularizationParameter, Matrix);
           OUTPUT_PORT(2, RegInverse, Matrix);
-          
+
           // UI declaration
           static const Dataflow::Networks::ModuleLookupInfo staticInfo_;
-          
+
           // Algorithm Params
           static const Core::Algorithms::AlgorithmParameterName LambdaFromDirectEntry;
           static const Core::Algorithms::AlgorithmParameterName RegularizationMethod;
@@ -80,8 +79,8 @@ namespace SCIRun {
           static const Core::Algorithms::AlgorithmParameterName LambdaSliderValue;
           static const Core::Algorithms::AlgorithmParameterName LambdaCorner;
           static const Core::Algorithms::AlgorithmParameterName LCurveText;
-          
-          
+
+
       private:
           // update L-curve in UI
           void update_lcurve_gui(const double lambda, const BioPSE::TikhonovAlgorithm::LCurveInput& input, const int lambda_index);

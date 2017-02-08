@@ -33,8 +33,8 @@ DEALINGS IN THE SOFTWARE.
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonovImpl_child.h>
-#include <Modules/Legacy/Inverse/TikhonovImplAbstractBase.h>
+#include <Core/Algorithms/Legacy/Inverse/SolveInverseProblemWithTikhonovImpl_child.h>
+#include <Core/Algorithms/Legacy/Inverse/TikhonovImplAbstractBase.h>
 
 #include <Core/Datatypes/Matrix.h>
 #include <Core/Datatypes/DenseMatrix.h>
@@ -83,7 +83,7 @@ using namespace SCIRun::Core::Logging;
 //////////////////
 //////////
 
-    
+
 /////////////////////////
 ///////// compute Inverse solution
     DenseColumnMatrix SolveInverseProblemWithTikhonovImpl_child::computeInverseSolution( double lambda_sq, bool inverseCalculation)
@@ -99,21 +99,21 @@ using namespace SCIRun::Core::Logging;
         //
         //      A^-1 = M3 * G^-1 * M4
         //...........................................................................................................
-        
+
         const int sizeB = M1.ncols();
         const int sizeSolution = M3.nrows();
         DenseMatrix inverseG(sizeB,sizeB);
-        
+
         DenseColumnMatrix b(sizeB);
         DenseColumnMatrix solution(sizeSolution);
         DenseMatrix G;
-        
+
         G = M1 + lambda_sq * M2;
-        
+
         b = G.lu().solve(y).eval();
-        
+
         solution = M3 * b;
-        
+
         if (inverseCalculation)
         {
             inverseG = G.inverse().eval();
@@ -129,15 +129,15 @@ using namespace SCIRun::Core::Logging;
 ///////////////
     void SolveInverseProblemWithTikhonovImpl_child::preAlocateInverseMatrices()
     {
-        
+
         // TODO: use DimensionMismatch exception where appropriate
         // DIMENSION CHECK!!
         const int M = forwardMatrix_->nrows();
         const int N = forwardMatrix_->ncols();
-        
+
         // PREALOCATE VARIABLES and MATRICES
         DenseMatrix forward_transpose = forwardMatrix_->transpose();
-        
+
         // select underdetermined case if user decides so or the option is set to automatic and number of measurements is smaller than number of unknowns.
         if ( ( (M < N) && (regularizationChoice_ == automatic) ) || (regularizationChoice_ == underdetermined))
         {
@@ -153,12 +153,12 @@ using namespace SCIRun::Core::Logging;
             //      M4 = identity
             //      y = measuredData
             //.........................M1,................................................
-            
+
             DenseMatrix RRtr(N,N);
             DenseMatrix iRRtr(N,N);
             DenseMatrix CCtr(M,M);
             DenseMatrix iCCtr(M,M);
-            
+
             // DEFINITIONS AND PREALOCATION OF SOURCE REGULARIZATION MATRIX 'R'
             // if R does not exist, set as identity of size equal to N (columns of fwd matrix)
             if (!sourceWeighting_)
@@ -168,7 +168,7 @@ using namespace SCIRun::Core::Logging;
             }
             else
             {
-                
+
                 // if provided the non-squared version of R
                 if( regularizationSolutionSubcase_==solution_constrained )
                 {
@@ -179,7 +179,7 @@ using namespace SCIRun::Core::Logging;
                 {
                     RRtr = *sourceWeighting_;
                 }
-                
+
                 // check if squared regularization matrix is invertible
                 if ( !RRtr.fullPivLu().isInvertible() )
                 {
@@ -192,23 +192,23 @@ using namespace SCIRun::Core::Logging;
                     {
                         std::cerr << errorMessage << std::endl;
                     }
-                    
+
                     THROW_ALGORITHM_INPUT_ERROR_SIMPLE(errorMessage);
                 }
-                
+
                 // COMPUTE inverse
                 iRRtr = RRtr.inverse().eval();
-                
+
             }
-            
-            
+
+
             // DEFINITIONS AND PREALOCATIONS OF MEASUREMENTS COVARIANCE MATRIX 'C'
             // if C does not exist, set as identity of size equal to M (rows of fwd matrix)
             if (!sensorWeighting_)
             {
                 CCtr = DenseMatrix::Identity(M, M);
                 iCCtr = CCtr;
-                
+
             }
             else
             {
@@ -226,7 +226,7 @@ using namespace SCIRun::Core::Logging;
                 {
                     CCtr = *sensorWeighting_;
                 }
-                
+
                 // check if squared regularization matrix is invertible
                 if ( !CCtr.fullPivLu().isInvertible() )
                 {
@@ -242,29 +242,29 @@ using namespace SCIRun::Core::Logging;
                     THROW_ALGORITHM_INPUT_ERROR_SIMPLE(errorMessage);
                 }
                 iCCtr = CCtr.inverse().eval();
-                
-                
-                
+
+
+
             }
-            
+
             // DEFINE  M1 = (A * (R^T*R)^-1 * A^T MATRIX FOR FASTER COMPUTATION
             DenseMatrix RAtr = iRRtr * forward_transpose;
             M1 = *forwardMatrix_ * RAtr;
-            
+
             // DEFINE M2 = (C^TC)^-1
             M2 = iCCtr;
-            
+
             // DEFINE M3 = (R^TR)^-1 * A^T
             M3 = RAtr;
-            
+
             // DEFINE M4 = identity (size of number of measurements)
             M4 = DenseMatrix::Identity(M, N);
-            
+
             // DEFINE measurement vector
             y = *measuredData_;
-            
-            
-            
+
+
+
         }
         //OVERDETERMINED CASE,
         //similar procedure as underdetermined case (documentation comments similar, see above)
@@ -282,15 +282,15 @@ using namespace SCIRun::Core::Logging;
             //      M4 = A^TC^TC
             //      y = A * C^T*C * measuredData
             //.........................................................................
-            
-            
+
+
             // prealocations
             DenseMatrix RtrR(N,N);
             DenseMatrix CtrC(M,M);
-            
-            
+
+
             // DEFINITIONS AND PREALOCATION OF SOURCE REGULARIZATION MATRIX 'R'
-            
+
             // if R does not exist, set as identity of size equal to N (columns of fwd matrix)
             if (!sourceWeighting_)
             {
@@ -309,8 +309,8 @@ using namespace SCIRun::Core::Logging;
                     RtrR = *sourceWeighting_;
                 }
             }
-            
-            
+
+
             // DEFINITIONS AND PREALOCATIONS OF MEASUREMENTS COVARIANCE MATRIX 'C'
             // if C does not exist, set as identity of size equal to M (rows of fwd matrix)
             if (!sensorWeighting_)
@@ -329,27 +329,27 @@ using namespace SCIRun::Core::Logging;
                 {
                     CtrC = *sensorWeighting_;
                 }
-                
+
             }
-            
+
             // DEFINE  M1 = (A * (R*R^T)^-1 * A^T MATRIX FOR FASTER COMPUTATION
             DenseMatrix CtrCA = CtrC * (*forwardMatrix_);
             M1 = forward_transpose * CtrCA;
-            
+
             // DEFINE M2 = (CC^T)^-1
             M2 = RtrR;
-            
+
             // DEFINE M3 = identity (size of number of measurements)
             M3 = DenseMatrix::Identity(N, N);
-            
+
             // DEFINT M4 = A^T* C^T * C
             M4 = CtrCA.transpose();
-            
+
             // DEFINE measurement vector
             y = CtrCA.transpose() * *measuredData_;
-            
+
         }
-        
+
     }
 //////// End of prealocation of matrices
 ////////////

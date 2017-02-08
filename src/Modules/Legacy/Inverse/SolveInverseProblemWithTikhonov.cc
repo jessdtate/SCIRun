@@ -27,7 +27,7 @@
 */
 
 #include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonov.h>
-#include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonovImpl_child.h>
+#include <Core/Algorithms/Legacy/Inverse/SolveInverseProblemWithTikhonovImpl_child.h>
 #include <Core/Datatypes/MatrixTypeConversions.h>
 #include <Core/Datatypes/DenseColumnMatrix.h>
 #include <Core/Datatypes/Legacy/Field/Field.h>

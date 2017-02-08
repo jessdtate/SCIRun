@@ -33,7 +33,7 @@ DEALINGS IN THE SOFTWARE.
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include <Modules/Legacy/Inverse/TikhonovImplAbstractBase.h>
+#include <Core/Algorithms/Legacy/Inverse/TikhonovImplAbstractBase.h>
 
 #include <Core/Datatypes/Matrix.h>
 #include <Core/Datatypes/DenseMatrix.h>
@@ -53,6 +53,8 @@ using namespace SCIRun;
 using namespace SCIRun::Core;
 using namespace SCIRun::Core::Datatypes;
 using namespace SCIRun::Core::Logging;
+using namespace SCIRun::Core::Algorithms;
+using namespace SCIRun::Core::Algorithms::Inverse;
 
     TikhonovImplAbstractBase::TikhonovImplAbstractBase(const DenseMatrixHandle& forwardMatrix,
                                                  const DenseMatrixHandle& measuredData,
@@ -76,7 +78,7 @@ using namespace SCIRun::Core::Logging;
     {
         // check input sizes
         checkInputMatrixSizes();
-        
+
     }
 
 
@@ -95,14 +97,14 @@ using namespace SCIRun::Core::Logging;
         return regularizationParameter_;
     }
 
-    
+
 ////// CHECK IF INPUT MATRICES HAVE THE CORRECT SIZE
     bool TikhonovImplAbstractBase::checkInputMatrixSizes()
     {
-        
+
         const int M = forwardMatrix_->nrows();
         const int N = forwardMatrix_->ncols();
-        
+
         // check that rows of fwd matrix equal number of measurements
         if ( M != measuredData_->nrows() )
         {
@@ -117,7 +119,7 @@ using namespace SCIRun::Core::Logging;
             }
             BOOST_THROW_EXCEPTION(DimensionMismatch() << DimensionMismatchInfo(errorMessage));
         }
-        
+
         // check that number of time samples is 1. @JCOLLFONT to change for a more general case later (should add a for loop)
         if (1 != measuredData_->ncols())
         {
@@ -132,7 +134,7 @@ using namespace SCIRun::Core::Logging;
             }
             BOOST_THROW_EXCEPTION(DimensionMismatch() << DimensionMismatchInfo(errorMessage));
         }
-        
+
         // check source regularization matrix sizes
         if (sourceWeighting_)
         {
@@ -172,7 +174,7 @@ using namespace SCIRun::Core::Logging;
                 }
             }
         }
-        
+
         // check measurement regularization matrix sizes
         if (sensorWeighting_)
         {
@@ -210,27 +212,27 @@ using namespace SCIRun::Core::Logging;
                     }
                     BOOST_THROW_EXCEPTION(DimensionMismatch() << DimensionMismatchInfo(errorMessage));
                 }
-                
+
             }
         }
-        
+
         return true;
-        
+
     }
-    
-    
+
+
 /////////////////////////
 /////////  run()
     void TikhonovImplAbstractBase::run(const TikhonovImplAbstractBase::Input& input)
     {
-        
+
         const int M = forwardMatrix_->nrows();
-        
+
         // Alocate variables
         DenseColumnMatrix solution(M);
         double lambda_sq=0;
-        
-        
+
+
         //Get Regularization parameter(s) : Lambda
         if ((input.regMethod_ == "single") || (input.regMethod_ == "slider"))
         {
@@ -249,54 +251,54 @@ using namespace SCIRun::Core::Logging;
         {
             lambda_ = computeLcurve( input );
         }
-        
-        
+
+
         lambda_sq = lambda_ * lambda_;
-        
+
         // compute inverse solution
         solution = computeInverseSolution( lambda_sq, computeRegularizedInverse_);
-        
+
         // set final result
         inverseSolution_.reset(new DenseMatrix(solution));
-        
+
         // output regularization parameter
         DenseColumnMatrix tempLambda(1);
         tempLambda[0] = lambda_;
-        
+
         regularizationParameter_. reset( new DenseColumnMatrix(tempLambda) );
-        
-        
+
+
     }
 //////// fi  run()
 ///////////////////////////
 
-    
+
 ///////////////////////////
 /////// compute L-curve
     double TikhonovImplAbstractBase::computeLcurve( const TikhonovImplAbstractBase::Input& input )
     {
-        
+
         // define the step size of the lambda vector to be computed  (distance between min and max divided by number of desired lambdas in log scale)
         const int nLambda = input.lambdaCount_;
         const double lam_step = pow(10.0, log10(input.lambdaMax_ / input.lambdaMin_) / (nLambda-1));
         double lambda;
-        
+
         const int sizeSolution = forwardMatrix_->ncols();
         double lambda_sq;
-        
+
         // prealocate vector of lambdas and eta and rho
         std::vector<double> lambdaArray(nLambda, 0.0);
         std::vector<double> rho(nLambda, 0.0);
         std::vector<double> eta(nLambda, 0.0);
-        
+
         DenseColumnMatrix CAx, Rx;
         DenseColumnMatrix solution(sizeSolution);
-        
+
         lambdaArray[0] = input.lambdaMin_;
-        
+
         // initialize counter
         int lambda_index = 0;
-        
+
         // for all lambdas
         for (int j = 0; j < nLambda; j++)
         {
@@ -304,14 +306,14 @@ using namespace SCIRun::Core::Logging;
             {
                 lambdaArray[j] = lambdaArray[j-1] * lam_step;
             }
-            
+
             // set current lambda
             lambda_sq = lambdaArray[j] * lambdaArray[j];
-            
+
             // COMPUTE INVERSE SOLUTION  // Todo: @JCOLLFONT function needs to be defined
             solution = computeInverseSolution( lambda_sq, false);
-            
-            
+
+
             // if using source regularization matrix, apply it to compute Rx (for the eta computations)
             if (sourceWeighting_)
             {
@@ -328,18 +330,18 @@ using namespace SCIRun::Core::Logging;
             }
             else
                 Rx = solution;
-            
-            
+
+
             auto Ax = *forwardMatrix_  * solution;
             auto residualSolution = Ax - *measuredData_;
-            
+
             // if using source regularization matrix, apply it to compute Rx (for the eta computations)
             if (sensorWeighting_)
                 CAx = (*sensorWeighting_) * residualSolution;
             else
                 CAx = residualSolution;
-            
-            
+
+
             // compute rho and eta
             rho[j]=0; eta[j]=0;
             for (int k = 0; k < CAx.nrows(); k++)
@@ -347,39 +349,39 @@ using namespace SCIRun::Core::Logging;
                 double T = CAx(k);
                 rho[j] += T*T; //norm of the data fit term
             }
-            
+
             for (int k = 0; k < Rx.nrows(); k++)
             {
                 double T = Rx[k];
                 eta[j] += T*T; //norm of the model term
             }
-            
+
             // eta and rho needed to plot the Lcurve and determine the L corner
             rho[j] = sqrt(rho[j]);
             eta[j] = sqrt(eta[j]);
-            
-            
+
+
         }
-        
+
         // update L-curve
         boost::shared_ptr<TikhonovAlgorithm::LCurveInput> lcurveInput(new TikhonovAlgorithm::LCurveInput(rho, eta, lambdaArray, nLambda));
         lcurveInput_handle_ = lcurveInput;
-        
+
         // Find corner in L-curve
         lambda = FindCorner(*lcurveInput_handle_, lambda_index);
-        
+
         // update GUI
         if (input.updateLCurveGui_)
             input.updateLCurveGui_(lambda, *lcurveInput_handle_, lambda_index);
-        
+
         // return lambda
         return lambda;
-        
+
     }
 //////// fi compute L-curve
 /////////////////////////////
-    
-    
+
+
 ///// Find Corner, find the maximal curvature which corresponds to the L-curve corner
     double TikhonovImplAbstractBase::FindCorner(const TikhonovAlgorithm::LCurveInput& input, int& lambda_index)
     {
@@ -387,7 +389,7 @@ using namespace SCIRun::Core::Logging;
         const std::vector<double>& eta = input.eta_;
         const std::vector<double>& lambdaArray = input.lambdaArray_;
         int nLambda = input.nLambda_;
-        
+
         std::vector<double> deta(nLambda);
         std::vector<double> ddeta(nLambda);
         std::vector<double> drho(nLambda);
@@ -395,7 +397,7 @@ using namespace SCIRun::Core::Logging;
         std::vector<double> lrho(nLambda);
         std::vector<double> leta(nLambda);
         DenseColumnMatrix kapa(nLambda);
-        
+
         double maxKapa = -1.0e10;
         for (int i = 0; i < nLambda; i++)
         {
@@ -418,7 +420,7 @@ using namespace SCIRun::Core::Logging;
         ddrho[1] = ddrho[2];
         ddeta[0] = ddeta[2];
         ddeta[1] = ddeta[2];
-        
+
         lambda_index = 0;
         for (int i = 0; i < nLambda; i++)
         {
@@ -430,34 +432,34 @@ using namespace SCIRun::Core::Logging;
                 lambda_index = i;
             }
         }
-        
+
         return lambdaArray[lambda_index];
     }
-    
+
 ///// Search for closest Lambda to given lambda
     double TikhonovImplAbstractBase::LambdaLookup(const TikhonovAlgorithm::LCurveInput& input, double lambda, int& lambda_index, const double epsilon)
     {
         const std::vector<double>& lambdaArray = input.lambdaArray_;
         int nLambda = input.nLambda_;
-        
+
         for (int i = 0; i < nLambda-1; ++i)
         {
             if (i > 0 && (lambda < lambdaArray[i-1] || lambda > lambdaArray[i+1])) continue;
-            
+
             double lambda_step_midpoint = std::abs(lambdaArray[i+1] - lambdaArray[i])/2;
-            
+
             if (std::abs(lambda - lambdaArray[i]) <= epsilon)  // TODO: is this a reasonable comparison???
             {
                 lambda_index = i;
                 return lambdaArray[lambda_index];
             }
-            
+
             if (std::abs(lambda - lambdaArray[i]) < lambda_step_midpoint)
             {
                 lambda_index = i;
                 return lambdaArray[lambda_index];
             }
-            
+
             if (std::abs(lambda - lambdaArray[i+1]) < lambda_step_midpoint)
             {
                 lambda_index = i+1;
@@ -469,7 +471,7 @@ using namespace SCIRun::Core::Logging;
 
 
 /////// UI interaction functionality ////////
-    
+
 ////////// update L-curve graph
     void TikhonovImplAbstractBase::update_graph(const TikhonovImplAbstractBase::Input& input, double lambda, int lambda_index, const double epsilon)
     {
@@ -482,7 +484,7 @@ using namespace SCIRun::Core::Logging;
             }
         }
     }
-    
+
 
 //// Set eta, rho and num lambda
     TikhonovAlgorithm::LCurveInput::LCurveInput(const std::vector<double>& rho, const std::vector<double>& eta, const std::vector<double>& lambdaArray, int nLambda)
@@ -495,7 +497,7 @@ using namespace SCIRun::Core::Logging;
     : regMethod_(regMethod), lambdaFromTextEntry_(lambdaFromTextEntry), lambdaSlider_(lambdaSlider), lambdaCount_(lambdaCount), lambdaMin_(lambdaMin), lambdaMax_(lambdaMax),
     updateLCurveGui_(updateLCurveGui)
     {}
-    
-    
-    
+
+
+
 } // End namespace BioPSE

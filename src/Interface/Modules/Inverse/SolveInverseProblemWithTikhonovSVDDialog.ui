@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>SolveInverseProblemWithTikhonovSVD</class>
- <widget class="QDialog" name="SolveInverseProblemWithTikhonovSVD">
+ <class>SolveInverseProblemWithTikhonovSVDDialog</class>
+ <widget class="QDialog" name="SolveInverseProblemWithTikhonovSVDDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -23,7 +23,7 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="inputTabWidget_">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="problemTab_">
       <attribute name="title">
