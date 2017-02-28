@@ -41,8 +41,8 @@
 #include <Core/Datatypes/MatrixTypeConversions.h>
 
 // Tikhonov specific
-#include <Core/Algorithms/Legacy/Inverse/SolveInverseProblemWithTikhonovImpl.h>
-#include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonov.h>
+#include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonovSVD_Impl.h>
+#include <Modules/Legacy/Inverse/SolveInverseProblemWithTikhonovSVD.h>
 
 using namespace SCIRun;
 using namespace SCIRun::Testing;
@@ -63,7 +63,7 @@ using ::testing::Combine;
 using ::testing::Range;
 
 
-class TikhonovFunctionalTest : public ModuleTest
+class TikhonovSVDFunctionalTest : public ModuleTest
 {
 protected:
     UseRealModuleStateFactory f;
@@ -76,10 +76,10 @@ namespace  {
 /// -------- INPUTS TESTS ------------ ///
 
 // NULL fwd matrix + NULL measure data
-TEST_F(TikhonovFunctionalTest, loadNullFwdMatrixANDNullData)
+TEST_F(TikhonovSVDFunctionalTest, loadNullFwdMatrixANDNullData)
 {
   // create inputs
-  auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+  auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
   MatrixHandle nullMatrix, nullColumnMatrix;
   // input data
   stubPortNWithThisData(tikAlgImp, 0, nullMatrix);
@@ -90,10 +90,10 @@ TEST_F(TikhonovFunctionalTest, loadNullFwdMatrixANDNullData)
 }
 
 // ID fwd matrix + null measured data
-TEST_F(TikhonovFunctionalTest, loadIDFwdMatrixANDNullData)
+TEST_F(TikhonovSVDFunctionalTest, loadIDFwdMatrixANDNullData)
 {
   // create inputs
-  auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+  auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
   MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(3, 3)));    // forward matrix (IDentityt)
   MatrixHandle nullColumnMatrix;              // measurement data (null)
 
@@ -106,10 +106,10 @@ TEST_F(TikhonovFunctionalTest, loadIDFwdMatrixANDNullData)
 }
 
 // NULL fwd matrix + RANF measured data
-TEST_F(TikhonovFunctionalTest, loadNullFwdMatrixANDRandData)
+TEST_F(TikhonovSVDFunctionalTest, loadNullFwdMatrixANDRandData)
 {
   // create inputs
-  auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+  auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
   MatrixHandle fwdMatrix;    // forward matrix (IDentityt)
   MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(3, 1)));    // measurement data (rand)
 
@@ -122,10 +122,10 @@ TEST_F(TikhonovFunctionalTest, loadNullFwdMatrixANDRandData)
 }
 
 // ID squared fwd matrix + RAND measured data
-TEST_F(TikhonovFunctionalTest, loadIDFwdMatrixANDRandData)
+TEST_F(TikhonovSVDFunctionalTest, loadIDFwdMatrixANDRandData)
 {
   // create inputs
-  auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+  auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
   MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(3, 3)));    // forward matrix (IDentityt)
   MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(3, 1)));   // measurement data (rand)
 
@@ -138,10 +138,10 @@ TEST_F(TikhonovFunctionalTest, loadIDFwdMatrixANDRandData)
 }
 
 // ID non-square fwd matrix + RAND measured data  (underdetermined)
-TEST_F(TikhonovFunctionalTest, loadIDNonSquareFwdMatrixANDRandData)
+TEST_F(TikhonovSVDFunctionalTest, loadIDNonSquareFwdMatrixANDRandData)
 {
   // create inputs
-  auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+  auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
   MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(3, 4)));    // forward matrix (IDentityt)
   MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(3, 1)));   // measurement data (rand)
 
@@ -153,10 +153,10 @@ TEST_F(TikhonovFunctionalTest, loadIDNonSquareFwdMatrixANDRandData)
 }
 
 // ID non-square fwd matrix + RAND measured data  (overdetermined)
-TEST_F(TikhonovFunctionalTest, loadIDNonSquareFwdMatrixANDRandData2)
+TEST_F(TikhonovSVDFunctionalTest, loadIDNonSquareFwdMatrixANDRandData2)
 {
   // create inputs
-  auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+  auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
   MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 3)));    // forward matrix (IDentityt)
   MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
 
@@ -169,10 +169,10 @@ TEST_F(TikhonovFunctionalTest, loadIDNonSquareFwdMatrixANDRandData2)
 
 // ID square fwd matrix + RAND measured data  - different sizes
 //TODO: waiting on text fix from @jcollfont
-TEST_F(TikhonovFunctionalTest, DISABLED_loadIDSquareFwdMatrixANDRandDataDiffSizes)
+TEST_F(TikhonovSVDFunctionalTest, DISABLED_loadIDSquareFwdMatrixANDRandDataDiffSizes)
 {
   // create inputs
-  auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+  auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
   MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(3, 3)));    // forward matrix (IDentityt)
   MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
 
@@ -184,10 +184,10 @@ TEST_F(TikhonovFunctionalTest, DISABLED_loadIDSquareFwdMatrixANDRandDataDiffSize
 }
 
 // ID non-square fwd matrix + RAND measured data  - different sizes
-TEST_F(TikhonovFunctionalTest, loadIDNonSquareFwdMatrixANDRandDataDiffSizes)
+TEST_F(TikhonovSVDFunctionalTest, loadIDNonSquareFwdMatrixANDRandDataDiffSizes)
 {
   // create inputs
-  auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+  auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
   MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(3, 4)));    // forward matrix (IDentityt)
   MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(5, 1)));   // measurement data (rand)
 
@@ -201,17 +201,17 @@ TEST_F(TikhonovFunctionalTest, loadIDNonSquareFwdMatrixANDRandDataDiffSizes)
 //// ---------- Source Regularization Matrix Input Tests ----------- //////
 
 // ID square fwd matrix + RAND measured data  - ok sizes - Regularization matrix squared option:"non-squared - ok size
-TEST_F(TikhonovFunctionalTest, loadIDSquaredSourceReguWithNonSquareOption)
+TEST_F(TikhonovSVDFunctionalTest, loadIDSquaredSourceReguWithNonSquareOption)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (Identity)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(Parameters::TikhonovSolutionSubcase, TikhonovAlgorithmImpl::AlgorithmSolutionSubcase::solution_constrained);  // select single lambda
+    tikAlgImp->get_state()->setValue(Parameters::TikhonovSolutionSubcase, TikhonovImplAbstractBase::AlgorithmSolutionSubcase::solution_constrained);  // select single lambda
 
     // input data
     stubPortNWithThisData(tikAlgImp, 0, fwdMatrix);
@@ -222,17 +222,17 @@ TEST_F(TikhonovFunctionalTest, loadIDSquaredSourceReguWithNonSquareOption)
 }
 
 // ID square fwd matrix + RAND measured data  - ok sizes - Regularization matrix non-squared option:"non-squared - ok size
-TEST_F(TikhonovFunctionalTest, loadIDNonSquaredSourceReguWithNonSquareOption)
+TEST_F(TikhonovSVDFunctionalTest, loadIDNonSquaredSourceReguWithNonSquareOption)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Identity(5, 4)));    // forward matrix (Identity)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(Parameters::TikhonovSolutionSubcase, TikhonovAlgorithmImpl::AlgorithmSolutionSubcase::solution_constrained);  // select single lambda
+    tikAlgImp->get_state()->setValue(Parameters::TikhonovSolutionSubcase, TikhonovImplAbstractBase::AlgorithmSolutionSubcase::solution_constrained);  // select single lambda
 
     // input data
     stubPortNWithThisData(tikAlgImp, 0, fwdMatrix);
@@ -243,17 +243,17 @@ TEST_F(TikhonovFunctionalTest, loadIDNonSquaredSourceReguWithNonSquareOption)
 }
 
 // ID square fwd matrix + RAND measured data  - ok sizes - Regularization matrix squared option:"squared - ok size
-TEST_F(TikhonovFunctionalTest, loadIDSquaredSourceReguWithSquareOption)
+TEST_F(TikhonovSVDFunctionalTest, loadIDSquaredSourceReguWithSquareOption)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (Identity)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(Parameters::TikhonovSolutionSubcase, TikhonovAlgorithmImpl::AlgorithmSolutionSubcase::solution_constrained_squared);  // select single lambda
+    tikAlgImp->get_state()->setValue(Parameters::TikhonovSolutionSubcase, TikhonovImplAbstractBase::AlgorithmSolutionSubcase::solution_constrained_squared);  // select single lambda
 
     // input data
     stubPortNWithThisData(tikAlgImp, 0, fwdMatrix);
@@ -264,10 +264,10 @@ TEST_F(TikhonovFunctionalTest, loadIDSquaredSourceReguWithSquareOption)
 }
 
 // ID square fwd matrix + RAND measured data  - ok sizes - Regularization matrix non-squared option:"squared - ok size
-TEST_F(TikhonovFunctionalTest, loadIDNonSquaredSourceReguWithSquareOption)
+TEST_F(TikhonovSVDFunctionalTest, loadIDNonSquaredSourceReguWithSquareOption)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     Core::Algorithms::AlgorithmParameterName TikhonovSolutionSubcase;
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
@@ -286,17 +286,17 @@ TEST_F(TikhonovFunctionalTest, loadIDNonSquaredSourceReguWithSquareOption)
 }
 
 // ID square fwd matrix + RAND measured data  - ok sizes - Regularization matrix squared option:"non-squared - wrong size
-TEST_F(TikhonovFunctionalTest, loadIDSquaredSourceReguWithNonSquareOptionWrongSizeWrongSize)
+TEST_F(TikhonovSVDFunctionalTest, loadIDSquaredSourceReguWithNonSquareOptionWrongSizeWrongSize)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Identity(5, 5)));    // forward matrix (Identity)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(Parameters::TikhonovSolutionSubcase, TikhonovAlgorithmImpl::AlgorithmSolutionSubcase::solution_constrained);  // select single lambda
+    tikAlgImp->get_state()->setValue(Parameters::TikhonovSolutionSubcase, TikhonovImplAbstractBase::AlgorithmSolutionSubcase::solution_constrained);  // select single lambda
 
     // input data
     stubPortNWithThisData(tikAlgImp, 0, fwdMatrix);
@@ -307,17 +307,17 @@ TEST_F(TikhonovFunctionalTest, loadIDSquaredSourceReguWithNonSquareOptionWrongSi
 }
 
 // ID square fwd matrix + RAND measured data  - ok sizes - Regularization matrix squared option:"non-squared - wrong size
-TEST_F(TikhonovFunctionalTest, loadIDNonSquaredSourceReguWithNonSquareOptionWrongSize)
+TEST_F(TikhonovSVDFunctionalTest, loadIDNonSquaredSourceReguWithNonSquareOptionWrongSize)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Identity(4, 5)));    // forward matrix (Identity)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(Parameters::TikhonovSolutionSubcase, TikhonovAlgorithmImpl::AlgorithmSolutionSubcase::solution_constrained);  // select single lambda
+    tikAlgImp->get_state()->setValue(Parameters::TikhonovSolutionSubcase, TikhonovImplAbstractBase::AlgorithmSolutionSubcase::solution_constrained);  // select single lambda
 
     // input data
     stubPortNWithThisData(tikAlgImp, 0, fwdMatrix);
@@ -328,17 +328,17 @@ TEST_F(TikhonovFunctionalTest, loadIDNonSquaredSourceReguWithNonSquareOptionWron
 }
 
 // ID square fwd matrix + RAND measured data  - ok sizes - Regularization matrix squared option:"non-squared - wrong size
-TEST_F(TikhonovFunctionalTest, loadIDSquaredSourceReguWithSquareOptionWrongSize)
+TEST_F(TikhonovSVDFunctionalTest, loadIDSquaredSourceReguWithSquareOptionWrongSize)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Identity(5, 5)));    // forward matrix (Identity)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(Parameters::TikhonovSolutionSubcase, TikhonovAlgorithmImpl::AlgorithmSolutionSubcase::solution_constrained_squared);  // select single lambda
+    tikAlgImp->get_state()->setValue(Parameters::TikhonovSolutionSubcase, TikhonovImplAbstractBase::AlgorithmSolutionSubcase::solution_constrained_squared);  // select single lambda
 
     // input data
     stubPortNWithThisData(tikAlgImp, 0, fwdMatrix);
@@ -349,17 +349,17 @@ TEST_F(TikhonovFunctionalTest, loadIDSquaredSourceReguWithSquareOptionWrongSize)
 }
 
 // ID square fwd matrix + RAND measured data  - ok sizes - Regularization matrix squared option:"non-squared - wrong size
-TEST_F(TikhonovFunctionalTest, loadIDNonSquaredSourceReguWithSquareOptionWrongSize)
+TEST_F(TikhonovSVDFunctionalTest, loadIDNonSquaredSourceReguWithSquareOptionWrongSize)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Identity(4, 5)));    // forward matrix (Identity)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(Parameters::TikhonovSolutionSubcase, TikhonovAlgorithmImpl::AlgorithmSolutionSubcase::solution_constrained_squared);  // select single lambda
+    tikAlgImp->get_state()->setValue(Parameters::TikhonovSolutionSubcase, TikhonovImplAbstractBase::AlgorithmSolutionSubcase::solution_constrained_squared);  // select single lambda
 
     // input data
     stubPortNWithThisData(tikAlgImp, 0, fwdMatrix);
@@ -373,17 +373,17 @@ TEST_F(TikhonovFunctionalTest, loadIDNonSquaredSourceReguWithSquareOptionWrongSi
 //// ---------- Measurement (residual) Regularization Matrix Input Tests ----------- //////
 
 // ID square fwd matrix + RAND measured data  - ok sizes - Regularization matrix squared option:"non-squared - ok size
-TEST_F(TikhonovFunctionalTest, loadIDSquaredMeasurementReguWithNonSquareOption)
+TEST_F(TikhonovSVDFunctionalTest, loadIDSquaredMeasurementReguWithNonSquareOption)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (Identity)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(Parameters::TikhonovResidualSubcase, TikhonovAlgorithmImpl::AlgorithmResidualSubcase::residual_constrained);  // select single lambda
+    tikAlgImp->get_state()->setValue(Parameters::TikhonovResidualSubcase, TikhonovImplAbstractBase::AlgorithmResidualSubcase::residual_constrained);  // select single lambda
 
     // input data
     stubPortNWithThisData(tikAlgImp, 0, fwdMatrix);
@@ -394,17 +394,17 @@ TEST_F(TikhonovFunctionalTest, loadIDSquaredMeasurementReguWithNonSquareOption)
 }
 
 // ID square fwd matrix + RAND measured data  - ok sizes - Regularization matrix non-squared option:"non-squared - ok size
-TEST_F(TikhonovFunctionalTest, loadIDNonSquaredMeasurementReguWithNonSquareOption)
+TEST_F(TikhonovSVDFunctionalTest, loadIDNonSquaredMeasurementReguWithNonSquareOption)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Identity(5, 4)));    // forward matrix (Identity)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(Parameters::TikhonovResidualSubcase, TikhonovAlgorithmImpl::AlgorithmResidualSubcase::residual_constrained);  // select single lambda
+    tikAlgImp->get_state()->setValue(Parameters::TikhonovResidualSubcase, TikhonovImplAbstractBase::AlgorithmResidualSubcase::residual_constrained);  // select single lambda
 
     // input data
     stubPortNWithThisData(tikAlgImp, 0, fwdMatrix);
@@ -415,17 +415,17 @@ TEST_F(TikhonovFunctionalTest, loadIDNonSquaredMeasurementReguWithNonSquareOptio
 }
 
 // ID square fwd matrix + RAND measured data  - ok sizes - Regularization matrix squared option:"squared - ok size
-TEST_F(TikhonovFunctionalTest, loadIDSquaredMeasurementReguWithSquareOption)
+TEST_F(TikhonovSVDFunctionalTest, loadIDSquaredMeasurementReguWithSquareOption)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (Identity)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(Parameters::TikhonovResidualSubcase, TikhonovAlgorithmImpl::AlgorithmResidualSubcase::residual_constrained_squared);  // select single lambda
+    tikAlgImp->get_state()->setValue(Parameters::TikhonovResidualSubcase, TikhonovImplAbstractBase::AlgorithmResidualSubcase::residual_constrained_squared);  // select single lambda
 
     // input data
     stubPortNWithThisData(tikAlgImp, 0, fwdMatrix);
@@ -436,17 +436,17 @@ TEST_F(TikhonovFunctionalTest, loadIDSquaredMeasurementReguWithSquareOption)
 }
 
 // ID square fwd matrix + RAND measured data  - ok sizes - Regularization matrix non-squared option:"squared - ok size
-TEST_F(TikhonovFunctionalTest, loadIDNonSquaredMeasurementReguWithSquareOption)
+TEST_F(TikhonovSVDFunctionalTest, loadIDNonSquaredMeasurementReguWithSquareOption)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Identity(5, 4)));    // forward matrix (Identity)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(Parameters::TikhonovResidualSubcase, TikhonovAlgorithmImpl::AlgorithmResidualSubcase::residual_constrained_squared);  // select single lambda
+    tikAlgImp->get_state()->setValue(Parameters::TikhonovResidualSubcase, TikhonovImplAbstractBase::AlgorithmResidualSubcase::residual_constrained_squared);  // select single lambda
 
     // input data
     stubPortNWithThisData(tikAlgImp, 0, fwdMatrix);
@@ -457,17 +457,17 @@ TEST_F(TikhonovFunctionalTest, loadIDNonSquaredMeasurementReguWithSquareOption)
 }
 
 // ID square fwd matrix + RAND measured data  - ok sizes - Regularization matrix squared option:"non-squared - wrong size
-TEST_F(TikhonovFunctionalTest, loadIDSquaredMeasurementReguWithNonSquareOptionWrongSizeWrongSize)
+TEST_F(TikhonovSVDFunctionalTest, loadIDSquaredMeasurementReguWithNonSquareOptionWrongSizeWrongSize)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Identity(5, 5)));    // forward matrix (Identity)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(Parameters::TikhonovResidualSubcase, TikhonovAlgorithmImpl::AlgorithmResidualSubcase::residual_constrained);  // select single lambda
+    tikAlgImp->get_state()->setValue(Parameters::TikhonovResidualSubcase, TikhonovImplAbstractBase::AlgorithmResidualSubcase::residual_constrained);  // select single lambda
 
     // input data
     stubPortNWithThisData(tikAlgImp, 0, fwdMatrix);
@@ -478,17 +478,17 @@ TEST_F(TikhonovFunctionalTest, loadIDSquaredMeasurementReguWithNonSquareOptionWr
 }
 
 // ID square fwd matrix + RAND measured data  - ok sizes - Regularization matrix squared option:"non-squared - wrong size
-TEST_F(TikhonovFunctionalTest, loadIDNonSquaredMeasurementReguWithNonSquareOptionWrongSize)
+TEST_F(TikhonovSVDFunctionalTest, loadIDNonSquaredMeasurementReguWithNonSquareOptionWrongSize)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Identity(4, 5)));    // forward matrix (Identity)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(Parameters::TikhonovResidualSubcase, TikhonovAlgorithmImpl::AlgorithmResidualSubcase::residual_constrained);  // select single lambda
+    tikAlgImp->get_state()->setValue(Parameters::TikhonovResidualSubcase, TikhonovImplAbstractBase::AlgorithmResidualSubcase::residual_constrained);  // select single lambda
 
     // input data
     stubPortNWithThisData(tikAlgImp, 0, fwdMatrix);
@@ -499,17 +499,17 @@ TEST_F(TikhonovFunctionalTest, loadIDNonSquaredMeasurementReguWithNonSquareOptio
 }
 
 // ID square fwd matrix + RAND measured data  - ok sizes - Regularization matrix squared option:"non-squared - wrong size
-TEST_F(TikhonovFunctionalTest, loadIDSquaredMeasurementReguWithSquareOptionWrongSize)
+TEST_F(TikhonovSVDFunctionalTest, loadIDSquaredMeasurementReguWithSquareOptionWrongSize)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Identity(5, 5)));    // forward matrix (Identity)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(Parameters::TikhonovResidualSubcase, TikhonovAlgorithmImpl::AlgorithmResidualSubcase::residual_constrained_squared);  // select single lambda
+    tikAlgImp->get_state()->setValue(Parameters::TikhonovResidualSubcase, TikhonovImplAbstractBase::AlgorithmResidualSubcase::residual_constrained_squared);  // select single lambda
 
     // input data
     stubPortNWithThisData(tikAlgImp, 0, fwdMatrix);
@@ -520,17 +520,17 @@ TEST_F(TikhonovFunctionalTest, loadIDSquaredMeasurementReguWithSquareOptionWrong
 }
 
 // ID square fwd matrix + RAND measured data  - ok sizes - Regularization matrix squared option:"non-squared - wrong size
-TEST_F(TikhonovFunctionalTest, loadIDNonSquaredMeasurementReguWithSquareOptionWrongSize)
+TEST_F(TikhonovSVDFunctionalTest, loadIDNonSquaredMeasurementReguWithSquareOptionWrongSize)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(4, 4)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(4, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Identity(4, 5)));    // forward matrix (Identity)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(Parameters::TikhonovResidualSubcase, TikhonovAlgorithmImpl::AlgorithmResidualSubcase::residual_constrained_squared);  // select single lambda
+    tikAlgImp->get_state()->setValue(Parameters::TikhonovResidualSubcase, TikhonovImplAbstractBase::AlgorithmResidualSubcase::residual_constrained_squared);  // select single lambda
 
     // input data
     stubPortNWithThisData(tikAlgImp, 0, fwdMatrix);
@@ -544,10 +544,10 @@ TEST_F(TikhonovFunctionalTest, loadIDNonSquaredMeasurementReguWithSquareOptionWr
 /// -------- BASIC FUNCTIONS TESTS ------------ ///
 /*
 // ID square forward matrix with ZERO regularization, RAND input
-TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandData)
+TEST_F(TikhonovSVDFunctionalTest, functionTestIDFwdMatrixANDRandData)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     DenseMatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(3, 3)));    // forward matrix (IDentityt)
     DenseMatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(3, 1)));   // measurement data (rand)
     DenseMatrixHandle inverseSolution_;
@@ -559,8 +559,8 @@ TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandData)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonov::RegularizationMethod, std::string("single"));  // select single lambda
-    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonov::LambdaFromDirectEntry, 0 );                    // change lambda
+    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonovSVD::RegularizationMethod, std::string("single"));  // select single lambda
+    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonovSVD::LambdaFromDirectEntry, 0 );                    // change lambda
 
     // execute
     tikAlgImp->execute();
@@ -575,10 +575,10 @@ TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandData)
 */
 /*
 // ID square forward matrix with dafault options
-TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandDataWithDefaultOptions)
+TEST_F(TikhonovSVDFunctionalTest, functionTestIDFwdMatrixANDRandDataWithDefaultOptions)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(3, 3)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(3, 1)));   // measurement data (rand)
     MatrixHandle inverseSolution;
@@ -601,10 +601,10 @@ TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandDataWithDefaultOpti
 }
 
 // Singular forward matrix with regularization
-TEST_F(TikhonovFunctionalTest, functionTestZeroFwdMatrixANDRandDataSomeRegu)
+TEST_F(TikhonovSVDFunctionalTest, functionTestZeroFwdMatrixANDRandDataSomeRegu)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Zero(3, 3)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(3, 1)));   // measurement data (rand)
     MatrixHandle inverseSolution;
@@ -615,8 +615,8 @@ TEST_F(TikhonovFunctionalTest, functionTestZeroFwdMatrixANDRandDataSomeRegu)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonov::RegularizationMethod, std::string("single"));  // select single lambda
-    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonov::LambdaFromDirectEntry, 10 );                    // change lambda
+    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonovSVD::RegularizationMethod, std::string("single"));  // select single lambda
+    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonovSVD::LambdaFromDirectEntry, 10 );                    // change lambda
 
     // execute
     tikAlgImp->execute();
@@ -629,10 +629,10 @@ TEST_F(TikhonovFunctionalTest, functionTestZeroFwdMatrixANDRandDataSomeRegu)
 
 
 // Singular forward matrix with 0 regularization
-TEST_F(TikhonovFunctionalTest, functionTestZeroFwdMatrixANDRandDataNoRegu)
+TEST_F(TikhonovSVDFunctionalTest, functionTestZeroFwdMatrixANDRandDataNoRegu)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Zero(3, 3)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(3, 1)));   // measurement data (rand)
 
@@ -642,8 +642,8 @@ TEST_F(TikhonovFunctionalTest, functionTestZeroFwdMatrixANDRandDataNoRegu)
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonov::RegularizationMethod, std::string("single"));  // select single lambda
-    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonov::LambdaFromDirectEntry, 0 );                    // change lambda
+    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonovSVD::RegularizationMethod, std::string("single"));  // select single lambda
+    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonovSVD::LambdaFromDirectEntry, 0 );                    // change lambda
 
     // execute
     tikAlgImp->execute();
@@ -654,10 +654,10 @@ TEST_F(TikhonovFunctionalTest, functionTestZeroFwdMatrixANDRandDataNoRegu)
 
 
 // ID forward matrix with source regularization matrix and single lambda
-TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandDataInputIDSourceReguSingleLambda)
+TEST_F(TikhonovSVDFunctionalTest, functionTestIDFwdMatrixANDRandDataInputIDSourceReguSingleLambda)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(3, 3)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(3, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Zero(3, 3)));    // source regularization matrix (identity)
@@ -671,8 +671,8 @@ TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandDataInputIDSourceRe
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonov::RegularizationMethod, std::string("single"));  // select single lambda
-    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonov::LambdaFromDirectEntry, 1 );                    // change lambda
+    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonovSVD::RegularizationMethod, std::string("single"));  // select single lambda
+    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonovSVD::LambdaFromDirectEntry, 1 );                    // change lambda
 
     // execute
     tikAlgImp->execute();
@@ -686,10 +686,10 @@ TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandDataInputIDSourceRe
 }
 
 // ID forward matrix with source regularization matrix and default L-curve
-TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandDataInputIDSourceReguSingleLambda)
+TEST_F(TikhonovSVDFunctionalTest, functionTestIDFwdMatrixANDRandDataInputIDSourceReguSingleLambda)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(3, 3)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(3, 1)));   // measurement data (rand)
     MatrixHandle sourceRegularizationMatrix(new DenseMatrix(DenseMatrix::Zero(3, 3)));    // source regularization matrix (identity)
@@ -717,10 +717,10 @@ TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandDataInputIDSourceRe
 
 
 // ID forward matrix with residual regularization matrix and single lambda
-TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandDataInputIDResidualReguWithSingleLambda)
+TEST_F(TikhonovSVDFunctionalTest, functionTestIDFwdMatrixANDRandDataInputIDResidualReguWithSingleLambda)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(3, 3)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(3, 1)));   // measurement data (rand)
     MatrixHandle residualRegularizationMatrix(new DenseMatrix(DenseMatrix::Zero(3, 3)));    // source regularization matrix (identity)
@@ -734,8 +734,8 @@ TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandDataInputIDResidual
 
     // change params
     tikAlgImp->setStateDefaults();                                                  // set default params
-    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonov::RegularizationMethod, std::string("single"));  // select single lambda
-    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonov::LambdaFromDirectEntry, 1 );                    // change lambda
+    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonovSVD::RegularizationMethod, std::string("single"));  // select single lambda
+    tikAlgImp->get_state()->setValue(SolveInverseProblemWithTikhonovSVD::LambdaFromDirectEntry, 1 );                    // change lambda
 
     // execute
     tikAlgImp->execute();
@@ -750,10 +750,10 @@ TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandDataInputIDResidual
 }
 
 // ID forward matrix with residual regularization matrix and default L-curve
-TEST_F(TikhonovFunctionalTest, functionTestIDFwdMatrixANDRandDataInputIDResidualReguWithDefaultOpts)
+TEST_F(TikhonovSVDFunctionalTest, functionTestIDFwdMatrixANDRandDataInputIDResidualReguWithDefaultOpts)
 {
     // create inputs
-    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonov");
+    auto tikAlgImp = makeModule("SolveInverseProblemWithTikhonovSVD");
     MatrixHandle fwdMatrix(new DenseMatrix(DenseMatrix::Identity(3, 3)));    // forward matrix (IDentityt)
     MatrixHandle measuredData(new DenseMatrix(DenseMatrix::Random(3, 1)));   // measurement data (rand)
     MatrixHandle residualRegularizationMatrix(new DenseMatrix(DenseMatrix::Zero(3, 3)));    // source regularization matrix (identity)

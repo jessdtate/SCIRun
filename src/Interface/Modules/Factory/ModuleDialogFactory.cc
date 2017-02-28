@@ -88,6 +88,7 @@
 #include <Interface/Modules/Fields/RegisterWithCorrespondencesDialog.h>
 #include <Interface/Modules/Forward/BuildBEMatrixDialog.h>
 #include <Interface/Modules/Inverse/SolveInverseProblemWithTikhonovDialog.h>
+#include <Interface/Modules/Inverse/SolveInverseProblemWithTikhonovSVDDialog.h>
 #include <Interface/Modules/FiniteElements/ApplyFEMCurrentSourceDialog.h>
 #include <Interface/Modules/Visualization/ShowStringDialog.h>
 #include <Interface/Modules/Visualization/ShowFieldDialog.h>
@@ -193,6 +194,7 @@ void ModuleDialogFactory::addDialogsToMakerMap1()
     ADD_MODULE_DIALOG(GetSliceFromStructuredFieldByIndices, GetSliceFromStructuredFieldByIndicesDialog)
     ADD_MODULE_DIALOG(ConvertIndicesToFieldData, ConvertIndicesToFieldDataDialog)
     ADD_MODULE_DIALOG(SolveInverseProblemWithTikhonov, SolveInverseProblemWithTikhonovDialog)
+    ADD_MODULE_DIALOG(SolveInverseProblemWithTikhonovSVD, SolveInverseProblemWithTikhonovSVDDialog)
     ADD_MODULE_DIALOG(ShowColorMap, ShowColorMapDialog)
     ADD_MODULE_DIALOG(RescaleColorMap, RescaleColorMapDialog)
     ADD_MODULE_DIALOG(ExtractSimpleIsosurface, ExtractSimpleIsosurfaceDialog)

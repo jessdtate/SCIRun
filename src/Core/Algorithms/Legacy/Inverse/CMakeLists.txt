@@ -26,27 +26,26 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
-# CMakeLists.txt for Dataflow/Modules/Inverse
+# CMakeLists.txt for Core/Algorithms/Legacy/Inverse
 
-SET(Modules_Legacy_Inverse_HEADERS
-  SolveInverseProblemWithTikhonov.h
-  BuildSurfaceLaplacianMatrix.h
-  SolveInverseProblemWithTikhonovSVD.h
+SET(Core_Algorithms_Legacy_Inverse_HEADERS
+  TikhonovImplAbstractBase.h
+  SolveInverseProblemWithTikhonovImpl_child.h
+  SolveInverseProblemWithTikhonovSVD_impl.h
 )
 
-SET(Modules_Legacy_Inverse_SRCS
-  SolveInverseProblemWithTikhonov.cc
-  BuildSurfaceLaplacianMatrix.cc
-  SolveInverseProblemWithTikhonovSVD.cc
+SET(Core_Algorithms_Legacy_Inverse_SRCS
+  TikhonovImplAbstractBase.cc
+  SolveInverseProblemWithTikhonovImpl_child.cc
+  SolveInverseProblemWithTikhonovSVD_impl.cc
 )
 
-SCIRUN_ADD_LIBRARY(Modules_Legacy_Inverse
-  ${Modules_Legacy_Inverse_HEADERS}
-  ${Modules_Legacy_Inverse_SRCS}
+SCIRUN_ADD_LIBRARY(Core_Algorithms_Legacy_Inverse
+  ${Core_Algorithms_Legacy_Inverse_HEADERS}
+  ${Core_Algorithms_Legacy_Inverse_SRCS}
 )
 
-TARGET_LINK_LIBRARIES(Modules_Legacy_Inverse
- Core_Algorithms_Legacy_Inverse
+TARGET_LINK_LIBRARIES(Core_Algorithms_Legacy_Inverse
  Dataflow_Network
  Core_Algorithms_Legacy_Geometry
  Core_Datatypes_Legacy_Field
@@ -60,7 +59,5 @@ TARGET_LINK_LIBRARIES(Modules_Legacy_Inverse
 )
 
 IF(BUILD_SHARED_LIBS)
-  ADD_DEFINITIONS(-DBUILD_Modules_Legacy_Inverse)
+  ADD_DEFINITIONS(-DBUILD_Core_Algorithms_Legacy_Inverse)
 ENDIF(BUILD_SHARED_LIBS)
-
-SCIRUN_ADD_TEST_DIR(Tests)
