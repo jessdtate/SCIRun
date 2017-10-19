@@ -201,17 +201,18 @@ namespace detail
         auto bbox = vmesh->get_bounding_box();
         imageBox_.extend(bbox);
         auto center = imageBox_.center();
+        float old_view[] = { toFloat(Parameters::CameraViewX), toFloat(Parameters::CameraViewY), toFloat(Parameters::CameraViewZ) };
         float position[] = { toFloat(Parameters::CameraPositionX), toFloat(Parameters::CameraPositionY), toFloat(Parameters::CameraPositionZ) };
         float cam_up[] = { toFloat(Parameters::CameraUpX), toFloat(Parameters::CameraUpY), toFloat(Parameters::CameraUpZ) };
         float newDir[] = { static_cast<float>(center.x()) - position[0],
            static_cast<float>(center.y()) - position[1],
            static_cast<float>(center.z()) - position[2]};
 
-        state_->setValue(Parameters::CameraViewX, center.x());
-        state_->setValue(Parameters::CameraViewY, center.y());
-        state_->setValue(Parameters::CameraViewZ, center.z());
+        state_->setValue(Parameters::CameraViewX, newDir[0]);
+        state_->setValue(Parameters::CameraViewY, newDir[1]);
+        state_->setValue(Parameters::CameraViewZ, newDir[2]);
         ospSet3fv(camera_, "dir", newDir);
-        auto newUp = getCameraUp(newDir, cam_up);
+        auto newUp = getCameraUp(old_view, newDir, cam_up);
         state_->setValue(Parameters::CameraUpX, newUp.x());
         state_->setValue(Parameters::CameraUpY, newUp.y());
         state_->setValue(Parameters::CameraUpZ, newUp.z());
@@ -220,27 +221,39 @@ namespace detail
       }
     }
 
-    Vector getCameraUp(float* newDir, float* cam_up)
+    Vector getCameraUp(float* oldDir,float* newDir, float* cam_up)
     {
-      Vector side(newDir[1]*cam_up[2] - newDir[2]*cam_up[1],
-        newDir[2]*cam_up[0] - newDir[0]*cam_up[2],
-        newDir[0]*cam_up[1] - newDir[1]*cam_up[0]);
-      auto norm_side = side.length();
-      if (norm_side <= 1e-3)
-      {
-        side = Vector(newDir[1], -newDir[0], 0.0);
-        norm_side = side.length();
-        if (norm_side <= 1e-3)
-        {
-          side = Vector(-newDir[2], 0.0, newDir[0]);
-          norm_side = side.length();
-        }
-      }
-      side /= norm_side;
-
-      return Vector(side[1]*newDir[2] - side[2]*newDir[1],
-        side[2]*newDir[0] - side[0]*newDir[2],
-        side[0]*newDir[1] - side[1]*newDir[0]);
+      Vector old_view(oldDir[0],oldDir[1],oldDir[2]);
+      Vector new_view(newDir[0],newDir[1],newDir[2]);
+      old_view.normalize();
+      new_view.normalize();
+      //std::cout<<old_view<<std::endl;
+      //std::cout<<new_view<<std::endl;
+      
+      auto ca = Dot(old_view,new_view);
+      auto angle=acos(ca);
+      auto sa = sin(angle);
+      
+      //std::cout<<"ca: "<<ca<<std::endl;
+      //std::cout<<"sa: "<<sa<<std::endl;
+      
+      if (std::abs(ca) >= 1 || angle<=1e-6 || (3.141593-angle)<=1e-6 ) return Vector(cam_up[0],cam_up[1],cam_up[2]);
+      
+      Vector ax = Cross(old_view,new_view);
+      ax.normalize();
+      //std::cout<<"axis: "<<ax<<std::endl;
+      //std::cout<<"angle: "<<angle<<std::endl;
+      
+      // multiply the rotation matrix. There is probably a better way to do this.
+      return Vector(cam_up[0]*(ca+ax.x()*ax.x()*(1-ca))
+                    +cam_up[1]*(ax.x()*ax.y()*(1-ca)-ax.z()*sa)
+                    +cam_up[2]*(ax.x()*ax.z()*(1-ca)+ax.y()*sa),
+                    cam_up[0]*(ax.x()*ax.y()*(1-ca)+ax.z()*sa)
+                    + cam_up[1]*(ca+ax.y()*ax.y()*(1-ca))
+                    + cam_up[2]*(ax.y()*ax.z()*(1-ca)-ax.x()*sa),
+                    cam_up[0]*(ax.x()*ax.z()*(1-ca)-ax.y()*sa)
+                    + cam_up[1]*(ax.y()*ax.z()*(1-ca)+ax.x()*sa)
+                    + cam_up[2]*(ca+ax.z()*ax.z()*(1-ca)));
     }
 
     void fillDataBuffers(FieldHandle field, ColorMapHandle colorMap)
