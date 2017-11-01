@@ -26,6 +26,7 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 */
 
+#include <es-log/trace-log.h>
 #include <gl-platform/GLPlatform.hpp>
 
 #include <Interface/Modules/Render/ViewScenePlatformCompatibility.h>
@@ -45,6 +46,7 @@ using namespace SCIRun::Gui;
 using namespace SCIRun::Dataflow::Networks;
 using namespace SCIRun::Core;
 using namespace SCIRun::Core::Datatypes;
+using namespace SCIRun::Core::Logging;
 using namespace SCIRun::Core::Geometry;
 using namespace SCIRun::Graphics::Datatypes;
 using namespace SCIRun::Core::Thread;
@@ -71,9 +73,14 @@ namespace
 //------------------------------------------------------------------------------
 ViewSceneDialog::ViewSceneDialog(const std::string& name, ModuleStateHandle state,
   QWidget* parent /* = 0 */)
-  : ModuleDialogGeneric(state, parent), mConfigurationDock(nullptr), shown_(false),
-  shiftdown_(false), selected_(false),
-  clippingPlaneIndex_(0),screenshotTaker_(nullptr), saveScreenshotOnNewGeometry_(false),
+  : ModuleDialogGeneric(state, parent),
+  mConfigurationDock(nullptr),
+  shown_(false),
+  shiftdown_(false),
+  selected_(false),
+  clippingPlaneIndex_(0),
+  screenshotTaker_(nullptr),
+  saveScreenshotOnNewGeometry_(false),
   gid_(new DialogIdGenerator(name))
 {
   counter_ = 1;
@@ -442,6 +449,7 @@ void ViewSceneDialog::closeEvent(QCloseEvent *evt)
 
 void ViewSceneDialog::newGeometryValue()
 {
+  RENDERER_LOG_FUNCTION_SCOPE;
   Guard lock(Modules::Render::ViewScene::mutex_.get());
 
   auto spire = mSpire.lock();

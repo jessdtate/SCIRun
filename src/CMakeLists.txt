@@ -374,6 +374,15 @@ IF(WITH_OSPRAY)
 ENDIF()
 
 ########################################################################
+# Detailed renderer logging
+
+OPTION(RENDERER_TRACE_ON "Enable detailed renderer logging." OFF)
+MARK_AS_ADVANCED(RENDERER_TRACE_ON)
+IF(RENDERER_TRACE_ON)
+  ADD_DEFINITIONS(-DRENDERER_TRACE_ON)
+ENDIF()
+
+########################################################################
 # Copy Spire-SCIRun specific assets and shaders
 
 set(OUTPUT_SHADER_DIR ${CMAKE_CURRENT_BINARY_DIR}/Shaders)
@@ -477,11 +486,10 @@ INCLUDE_DIRECTORIES(
   ${SCIRun_BINARY_DIR}/
   ${SCIRun_BINARY_DIR}/include
   ${SCIRun_SOURCE_DIR}/Externals/eigen
-  # TODO: set up include variable in log4cpp project
-  ${SCIRun_SOURCE_DIR}/Externals/log4cpp/include
   ${SCI_TEEM_INCLUDE}
   ${SCI_ZLIB_INCLUDE}
   ${GLM_DIR}
+  ${SPDLOG_DIR}/include
   ${SCI_TNY_INCLUDE}
   ${SCI_LODEPNG_INCLUDE}
 )
@@ -793,7 +801,6 @@ IF(BUILD_TESTING)
   ENDIF()
 ENDIF()
 
-SET_PROPERTY(TARGET ${SCI_LOG4CPP_LIBRARY} PROPERTY FOLDER "Externals")
 SET_PROPERTY(TARGET cleaver PROPERTY FOLDER "Externals")
 SET_PROPERTY(TARGET xml2 PROPERTY FOLDER "Externals")
 

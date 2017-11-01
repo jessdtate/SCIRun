@@ -32,6 +32,9 @@
 #include <Core/Datatypes/Color.h>
 #include <Core/Datatypes/DenseMatrix.h>
 
+#define SPDLOG_TRACE_ON
+#include <es-log/trace-log.h>
+
 // Needed to fix conflict between define in X11 header
 // and eigen enum member.
 #ifdef Success
@@ -44,6 +47,7 @@ using namespace Render;
 using namespace SCIRun::Core::Datatypes;
 using namespace SCIRun::Dataflow::Networks;
 using namespace SCIRun::Core::Thread;
+using namespace SCIRun::Core::Logging;
 
 MODULE_INFO_DEF(ViewScene, Render, SCIRun)
 
@@ -57,6 +61,7 @@ ALGORITHM_PARAMETER_DEF(Render, ShowFieldStates);
 
 ViewScene::ViewScene() : ModuleWithAsyncDynamicPorts(staticInfo_, true), asyncUpdates_(0)
 {
+  RENDERER_LOG_FUNCTION_SCOPE;
   INITIALIZE_PORT(GeneralGeom);
   INITIALIZE_PORT(ScreenshotDataRed);
   INITIALIZE_PORT(ScreenshotDataGreen);
