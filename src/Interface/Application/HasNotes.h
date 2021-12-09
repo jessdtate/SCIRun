@@ -3,10 +3,9 @@
 
    The MIT License
 
-   Copyright (c) 2015 Scientific Computing and Imaging Institute,
+   Copyright (c) 2020 Scientific Computing and Imaging Institute,
    University of Utah.
 
-   License for the specific language governing rights and limitations under
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
    to deal in the Software without restriction, including without limitation
@@ -26,6 +25,7 @@
    DEALINGS IN THE SOFTWARE.
 */
 
+
 #ifndef INTERFACE_APPLICATION_HAS_NOTES_H
 #define INTERFACE_APPLICATION_HAS_NOTES_H
 
@@ -40,19 +40,14 @@ namespace Gui {
   {
   public:
     HasNotes(const std::string& name, bool positionAdjustable);
-    virtual ~HasNotes();
     void connectNoteEditorToAction(QAction* action);
     void connectUpdateNote(QObject* obj);
     void setCurrentNote(const Note& note, bool updateEditor);
     Note getCurrentNote() const { return currentNote_; }
     void setDefaultNoteFontSize(int size);
-  protected:
-    void destroy();
   private:
     NoteEditor noteEditor_;
     Note currentNote_;
-    /// @todo: extract and make atomic
-    bool destroyed_;
   };
 
 }

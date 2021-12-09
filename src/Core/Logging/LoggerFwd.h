@@ -3,9 +3,8 @@
 
    The MIT License
 
-   Copyright (c) 2015 Scientific Computing and Imaging Institute,
+   Copyright (c) 2020 Scientific Computing and Imaging Institute,
    University of Utah.
-
 
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -26,10 +25,11 @@
    DEALINGS IN THE SOFTWARE.
 */
 
+
 #ifndef CORE_LOGGING_LOGGERFWD_H
 #define CORE_LOGGING_LOGGERFWD_H
 
-#include <boost/shared_ptr.hpp>
+#include <Core/Utils/SmartPointers.h>
 
 namespace spdlog
 {
@@ -43,7 +43,7 @@ namespace SCIRun
     namespace Logging
     {
       class LegacyLoggerInterface;
-      typedef boost::shared_ptr<LegacyLoggerInterface> LoggerHandle;
+      typedef SharedPointer<LegacyLoggerInterface> LoggerHandle;
 
       using Logger2 = std::shared_ptr<spdlog::logger>;
     }

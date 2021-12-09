@@ -1,12 +1,10 @@
-
 #
 #  For more information, please see: http://software.sci.utah.edu
 #
 #  The MIT License
 #
-#  Copyright (c) 2015 Scientific Computing and Imaging Institute,
+#  Copyright (c) 2020 Scientific Computing and Imaging Institute,
 #  University of Utah.
-#
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -27,11 +25,13 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
+
 SET(Interface_Modules_DataIO_FORMS
   ReadFieldDialog.ui
   ReadBundleDialog.ui
   ReadMatrixClassic.ui
   ReadNrrd.ui
+  ReadFile.ui
   WriteFieldDialog.ui
   WriteMatrix.ui
 )
@@ -41,6 +41,7 @@ SET(Interface_Modules_DataIO_HEADERS
   ReadBundleDialog.h
   ReadMatrixClassicDialog.h
   ReadNrrdDialog.h
+  ReadFileDialog.h
   WriteFieldDialog.h
   WriteMatrixDialog.h
   share.h
@@ -50,13 +51,14 @@ SET(Interface_Modules_DataIO_SOURCES
   ReadFieldDialog.cc
   ReadBundleDialog.cc
   ReadNrrdDialog.cc
+  ReadFileDialog.cc
   ReadMatrixClassicDialog.cc
   WriteFieldDialog.cc
   WriteMatrixDialog.cc
 )
 
-QT4_WRAP_UI(Interface_Modules_DataIO_FORMS_HEADERS ${Interface_Modules_DataIO_FORMS})
-QT4_WRAP_CPP(Interface_Modules_DataIO_HEADERS_MOC ${Interface_Modules_DataIO_HEADERS})
+QT_WRAP_UI(Interface_Modules_DataIO_FORMS_HEADERS "${Interface_Modules_DataIO_FORMS}")
+QT_WRAP_CPP(Interface_Modules_DataIO_HEADERS_MOC "${Interface_Modules_DataIO_HEADERS}")
 
 SCIRUN_ADD_LIBRARY(Interface_Modules_DataIO
   ${Interface_Modules_DataIO_HEADERS}

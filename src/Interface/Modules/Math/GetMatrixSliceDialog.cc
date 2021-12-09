@@ -3,10 +3,9 @@
 
    The MIT License
 
-   Copyright (c) 2015 Scientific Computing and Imaging Institute,
+   Copyright (c) 2020 Scientific Computing and Imaging Institute,
    University of Utah.
 
-   License for the specific language governing rights and limitations under
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
    to deal in the Software without restriction, including without limitation
@@ -25,6 +24,7 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
    DEALINGS IN THE SOFTWARE.
 */
+
 
 #include <Interface/Modules/Math/GetMatrixSliceDialog.h>
 #include <Dataflow/Network/ModuleStateInterface.h>  //TODO: extract into intermediate
@@ -48,9 +48,9 @@ GetMatrixSliceDialog::GetMatrixSliceDialog(const std::string& name, ModuleStateH
   addSpinBoxManager(indexIncrementSpinBox_, Parameters::SliceIncrement);
   addSpinBoxManager(executionDelaySpinBox_, Parameters::PlayModeDelay);
 
-  playModeMap_.insert(StringPair("Loop once", "looponce"));
-  playModeMap_.insert(StringPair("Loop forever (EXPERIMENTAL)", "loopforever"));
-  addComboBoxManager(playModeComboBox_, Parameters::PlayModeType, playModeMap_);
+  addComboBoxManager(playModeComboBox_, Parameters::PlayModeType,
+    {{"Loop once", "looponce"},
+    {"Loop forever (EXPERIMENTAL)", "loopforever"}});
 
   nextIndexButton_->setIcon(QApplication::style()->standardIcon(QStyle::SP_MediaSkipForward));
   connect(nextIndexButton_, SIGNAL(clicked()), this, SLOT(incrementIndex()));
@@ -80,6 +80,12 @@ void GetMatrixSliceDialog::pullSpecial()
   auto max = state_->getValue(Parameters::MaxIndex).toInt();
   indexSlider_->setMaximum(max);
   indexSpinBox_->setMaximum(max);
+
+  // set value again in case it was greater than the hard-coded widget max.
+  auto value = state_->getValue(Parameters::SliceIndex).toInt();
+  indexSlider_->setValue(value);
+  indexSpinBox_->setValue(value);
+
   indexSlider_->setMinimum(0);
 }
 
@@ -111,7 +117,7 @@ void GetMatrixSliceDialog::selectLastIndex()
 
 void GetMatrixSliceDialog::startPlay()
 {
-  state_->setTransientValue(Parameters::PlayModeActive, static_cast<int>(GetMatrixSliceAlgo::PLAY));
+  state_->setTransientValue(Parameters::PlayModeActive, static_cast<int>(GetMatrixSliceAlgo::PlayMode::PLAY));
   Q_EMIT executeFromStateChangeTriggered();
   Q_EMIT executionLoopStarted();
   //qDebug() << " execution loop started emitted ";
@@ -119,7 +125,7 @@ void GetMatrixSliceDialog::startPlay()
 
 void GetMatrixSliceDialog::stopPlay()
 {
-  state_->setTransientValue(Parameters::PlayModeActive, static_cast<int>(GetMatrixSliceAlgo::PAUSE));
+  state_->setTransientValue(Parameters::PlayModeActive, static_cast<int>(GetMatrixSliceAlgo::PlayMode::PAUSE));
   Q_EMIT executionLoopHalted();
   //qDebug() << " execution loop halted emitted ";
 }

@@ -3,10 +3,9 @@
 
    The MIT License
 
-   Copyright (c) 2015 Scientific Computing and Imaging Institute,
+   Copyright (c) 2020 Scientific Computing and Imaging Institute,
    University of Utah.
 
-   License for the specific language governing rights and limitations under
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
    to deal in the Software without restriction, including without limitation
@@ -25,6 +24,7 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
    DEALINGS IN THE SOFTWARE.
 */
+
 
 #ifndef INTERFACE_APPLICATION_CONNECTION_H
 #define INTERFACE_APPLICATION_CONNECTION_H
@@ -51,7 +51,7 @@ public:
   virtual void draw(QGraphicsPathItem* item, const QPointF& from, const QPointF& to) = 0;
 };
 
-typedef boost::shared_ptr<ConnectionDrawStrategy> ConnectionDrawStrategyPtr;
+typedef SharedPointer<ConnectionDrawStrategy> ConnectionDrawStrategyPtr;
 
 enum class ConnectionDrawType
 {
@@ -73,7 +73,7 @@ class ConnectionLine : public QObject, public QGraphicsPathItem, public HasNotes
 
 public:
   ConnectionLine(PortWidget* fromPort, PortWidget* toPort, const SCIRun::Dataflow::Networks::ConnectionId& id, ConnectionDrawStrategyPtr drawer);
-  ~ConnectionLine();
+  virtual ~ConnectionLine();
   void setColor(const QColor& color);
   void setColorAndWidth(const QColor& color, int width);
   QColor color() const;
@@ -83,8 +83,10 @@ public:
   const SCIRun::Dataflow::Networks::ConnectionId& id() const { return id_; }
   bool disabled() const { return disabled_; }
   void setDisabled(bool disabled);
+#if 0
   void addSubnetCompanion(PortWidget* subnetPort);
   void deleteCompanion();
+#endif
   bool isCompanion() const { return isCompanion_; }
 public Q_SLOTS:
   void trackNodes();
@@ -96,14 +98,13 @@ public Q_SLOTS:
 Q_SIGNALS:
   void deleted(const SCIRun::Dataflow::Networks::ConnectionId& id);
   void noteChanged();
-  void insertNewModule(const SCIRun::Dataflow::Networks::PortDescriptionInterface* output, const std::string& newModuleName, const SCIRun::Dataflow::Networks::PortDescriptionInterface* input);
+  void insertNewModule(const QMap<QString, std::string>& info);
 protected:
   void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override;
   void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
   void mouseMoveEvent(QGraphicsSceneMouseEvent* event) override;
   QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
   void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event) override;
-  virtual void setNoteGraphicsContext() override;
   void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
   void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
   void keyPressEvent(QKeyEvent* event) override;
@@ -121,7 +122,9 @@ private:
   QColor placeHoldingColor_;
   int placeHoldingWidth_;
   double defaultZValue() const;
+  #if 0
   ConnectionLine* subnetCompanion_ { nullptr };
+  #endif
   bool isCompanion_{ false };
 };
 
@@ -162,13 +165,13 @@ public:
     return Base::pen().color();
   }
 
-  virtual void makePotential() override
+  void makePotential() override
   {
     Base::setOpacity(0.3);
     Base::setPen(QPen(color(), 3.0, Qt::DotLine));
   }
 
-  virtual void highlight(bool on) override
+  void highlight(bool on) override
   {
     if (on)
     {
@@ -185,24 +188,24 @@ public:
     isHighlighted_ = on;
   }
 
-  virtual bool isHighlighted() const override { return isHighlighted_; }
+  bool isHighlighted() const override { return isHighlighted_; }
 
-  virtual QPointF endpoint() const override
+  QPointF endpoint() const override
   {
     return lastEnd_;
   }
 
-  virtual PortWidget* receiver() const override
+  PortWidget* receiver() const override
   {
     return receiver_;
   }
 
-  virtual void setReceiver(PortWidget* rec) override
+  void setReceiver(PortWidget* rec) override
   {
     receiver_ = rec;
   }
 
-  virtual void setLabel(QGraphicsTextItem* label) override
+  void setLabel(QGraphicsTextItem* label) override
   {
     label_ = label;
   }
@@ -220,21 +223,21 @@ class ConnectionInProgressStraight : public ConnectionInProgressGraphicsItem<QGr
 {
 public:
   ConnectionInProgressStraight(PortWidget* port, ConnectionDrawStrategyPtr drawer);
-  virtual void update(const QPointF& end);
+  void update(const QPointF& end) override;
 };
 
 class ConnectionInProgressCurved : public ConnectionInProgressGraphicsItem<QGraphicsPathItem>
 {
 public:
   ConnectionInProgressCurved(PortWidget* port, ConnectionDrawStrategyPtr drawer);
-  virtual void update(const QPointF& end);
+  void update(const QPointF& end) override;
 };
 
 class ConnectionInProgressManhattan : public ConnectionInProgressGraphicsItem<QGraphicsPathItem>
 {
 public:
   ConnectionInProgressManhattan(PortWidget* port, ConnectionDrawStrategyPtr drawer);
-  virtual void update(const QPointF& end);
+  void update(const QPointF& end) override;
 };
 
 class ConnectionFactory

@@ -3,10 +3,9 @@
 
    The MIT License
 
-   Copyright (c) 2015 Scientific Computing and Imaging Institute,
+   Copyright (c) 2020 Scientific Computing and Imaging Institute,
    University of Utah.
 
-   License for the specific language governing rights and limitations under
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
    to deal in the Software without restriction, including without limitation
@@ -25,6 +24,7 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
    DEALINGS IN THE SOFTWARE.
 */
+
 
 /// @todo Documentation Dataflow/Network/ModuleStateInterface.h
 
@@ -46,11 +46,17 @@ namespace SCIRun {
 namespace Dataflow {
 namespace Networks {
 
+/*
+  Big change coming: separate into three different "Solid/Liquid/Gas" states. All with same interface, with
+  more fine-grained signal control.
+  Or, have each state key/value be setup with a save/load spec object, that could provide the signaling behavior
+*/
+
   class SCISHARE ModuleStateInterface
   {
   public:
     virtual ~ModuleStateInterface();
-    
+
     typedef SCIRun::Core::Algorithms::AlgorithmParameterName Name;
     typedef SCIRun::Core::Algorithms::AlgorithmParameter Value;
     typedef std::vector<Name> Keys;
@@ -61,7 +67,7 @@ namespace Networks {
     virtual bool containsKey(const Name& name) const = 0;
     virtual Keys getKeys() const = 0;
     virtual ModuleStateHandle clone() const = 0;
-    
+
     // this function preserves key/value pairs not in other
     void overwriteWith(const ModuleStateInterface& other);
 
@@ -79,7 +85,11 @@ namespace Networks {
 
     virtual boost::signals2::connection connectStateChanged(state_changed_sig_t::slot_function_type subscriber) = 0;
     virtual boost::signals2::connection connectSpecificStateChanged(const Name& stateKeyToObserve, state_changed_sig_t::slot_function_type subscriber) = 0;
+    virtual void disconnectAll() = 0;
   };
+
+  SCISHARE void setModuleAlwaysExecute(ModuleStateHandle state, bool toggle);
+  SCISHARE bool getModuleAlwaysExecute(ModuleStateHandle state);
 
   class SCISHARE ModuleStateInterfaceFactory
   {
@@ -143,7 +153,7 @@ namespace Networks {
   T transient_value_cast_with_variable_check(const ModuleStateInterface::TransientValueOption& x)
   {
     if (!x)
-      return{};
+      return {};
 
     if (transient_value_check<T>(x))
       return any_cast_or_default_<T>(*x);

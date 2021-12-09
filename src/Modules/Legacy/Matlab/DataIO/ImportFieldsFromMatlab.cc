@@ -3,9 +3,8 @@
 
    The MIT License
 
-   Copyright (c) 2009 Scientific Computing and Imaging Institute,
+   Copyright (c) 2020 Scientific Computing and Imaging Institute,
    University of Utah.
-
 
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -26,13 +25,13 @@
    DEALINGS IN THE SOFTWARE.
 */
 
+
 /*
- * This module reads a matlab file and converts it to a SCIRun matrix
+ * This module reads a matlab file and converts it to a SCIRun field
  *
  */
 
 #include <Modules/Legacy/Matlab/DataIO/ImportFieldsFromMatlab.h>
-#include <vector>
 
 // ReSharper disable once CppUnusedIncludeDirective
 #include <Core/Datatypes/Legacy/Field/Field.h>
@@ -42,7 +41,9 @@
 #include <Core/Matlab/matlabarray.h>
 #include <Core/Matlab/matlabconverter.h>
 #include <Core/Algorithms/Base/AlgorithmVariableNames.h>
+#include <Core/Algorithms/Base/VariableHelper.h>
 
+using namespace SCIRun;
 using namespace SCIRun::Modules::Matlab;
 using namespace SCIRun::Core::Datatypes;
 using namespace SCIRun::Dataflow::Networks;
@@ -56,7 +57,7 @@ ALGORITHM_PARAMETER_DEF(Matlab, PortChoices);
 
 MODULE_INFO_DEF(ImportFieldsFromMatlab, Matlab, SCIRun)
 
-ImportFieldsFromMatlab::ImportFieldsFromMatlab() : Module(staticInfo_)
+ImportFieldsFromMatlab::ImportFieldsFromMatlab() : MatlabFileIndexModule(staticInfo_)
 {
   INITIALIZE_PORT(Field1);
   INITIALIZE_PORT(Field2);
@@ -73,41 +74,7 @@ void ImportFieldsFromMatlab::setStateDefaults()
   auto nones = makeHomogeneousVariableList([](size_t) { return std::string("<none>"); }, NUMPORTS);
   get_state()->setValue(Parameters::PortChoices, nones);
   get_state()->setValue(Variables::Filename, std::string());
-}
-
-namespace
-{
-  struct ScopedMatlabFileReader
-  {
-    explicit ScopedMatlabFileReader(const std::string& filename)
-    {
-      mfile.open(filename, "r");
-    }
-    ~ScopedMatlabFileReader()
-    {
-      mfile.close();
-    }
-    matlabfile mfile;
-  };
-
-  matlabarray readmatlabarray(matlabfile& mfile, const std::string& matlabName)
-  {
-    matlabarray marray;
-
-    if (matlabName.empty())
-    {
-      // return an empty array
-      return(marray);
-    }
-
-    if (matlabName == "<none>")
-    {
-      // return an empty array
-      return(marray);
-    }
-
-    return mfile.getmatlabarray(matlabName);
-  }
+  get_state()->connectSpecificStateChanged(Variables::Filename, [this]() { indexmatlabfile(); });
 }
 
 void ImportFieldsFromMatlab::postStateChangeInternalSignalHookup()
@@ -117,93 +84,113 @@ void ImportFieldsFromMatlab::postStateChangeInternalSignalHookup()
 
 void ImportFieldsFromMatlab::execute()
 {
-  auto fileOption = getOptionalInput(Filename);
-  auto state = get_state();
-  if (fileOption && *fileOption)
-	{
-    state->setValue(Variables::Filename, (*fileOption)->value());
-	}
+  executeImpl(Filename, FilenameOut);
+}
 
-  auto filename = state->getValue(Variables::Filename).toFilename().string();
+DatatypeHandle ImportFieldsFromMatlab::processMatlabData(const matlabarray& ma) const
+{
+  FieldHandle mh;
+  matlabconverter translate(getLogger());
+  translate.mlArrayTOsciField(ma, mh);
+  return mh;
+}
 
-  if (filename.empty())
+int ImportFieldsFromMatlab::indexMatlabFile(matlabconverter& converter, const matlabarray& mlarray, std::string& infostring) const
+{
+  return converter.sciFieldCompatible(mlarray, infostring, Core::Logging::LogSettings::Instance().verbose());
+}
+
+void MatlabFileIndexModule::executeImpl(const StringPortName<0>& filenameIn, const StringPortName<6>& filenameOut)
+{
+  auto fileOption = getOptionalInput(filenameIn);
+
+  if (needToExecute())
   {
-    error("ImportFieldsFromMatlab: No file name was specified");
-    return;
-  }
+    auto state = get_state();
+    if (fileOption && *fileOption)
+  	{
+      state->setValue(Variables::Filename, (*fileOption)->value());
+  	}
 
-  indexmatlabfile();
+    auto filename = state->getValue(Variables::Filename).toFilename().string();
 
-  auto choices = toStringVector(state->getValue(Parameters::PortChoices).toVector());
-
-  try
-  {
-    ScopedMatlabFileReader smfr(filename);
-    for (int p=0; p < NUMPORTS; ++p)
+    if (filename.empty())
     {
-      // Now read the matrix from file
-      // The next function will open, read, and close the file
-      // Any error will be exported as an exception.
-      // The matlab classes are all based in the matfilebase class
-      // which carries the definitions of the exceptions. These
-      // definitions are inherited by all other "matlab classes"
-
-      auto ma = readmatlabarray(smfr.mfile, choices[p]);
-
-      // An empty array means something must have gone wrong
-      // Or there is no data to put on this port.
-      // Do not translate empty arrays, but continue to the
-      // next output port.
-
-      if (ma.isempty())
-      {
-        continue;
-      }
-
-      // The data is still in matlab format and the next function
-      // creates a SCIRun matrix object
-
-      FieldHandle mh;
-      matlabconverter translate(getLogger());
-      translate.mlArrayTOsciField(ma,mh);
-
-      send_output_handle(outputPorts()[p]->id(), mh);
+      error("No file name was specified");
+      return;
     }
 
-    StringHandle filenameH(new String(filename));
-    sendOutput(Filename, filenameH);
-  }
-  catch (matlabfile::could_not_open_file&)
-  {
-    error("ImportFieldsFromMatlab: Could not open file");
-  }
-  catch (matlabfile::invalid_file_format&)
-  {
-    error("ImportFieldsFromMatlab: Invalid file format");
-  }
-  catch (matlabfile::io_error&)
-  {
-    error("ImportFieldsFromMatlab: IO error");
-  }
-  catch (matlabfile::out_of_range&)
-  {
-    error("ImportFieldsFromMatlab: Out of range");
-  }
-  catch (matlabfile::invalid_file_access&)
-  {
-    error("ImportFieldsFromMatlab: Invalid file access");
-  }
-  catch (matlabfile::empty_matlabarray&)
-  {
-    error("ImportFieldsFromMatlab: Empty matlab array");
-  }
-  catch (matlabfile::matfileerror&)
-  {
-    error("ImportFieldsFromMatlab: Internal error in reader");
+    indexmatlabfile();
+
+    auto choices = toStringVector(state->getValue(Parameters::PortChoices).toVector());
+
+    try
+    {
+      ScopedMatlabFileReader smfr(filename);
+      for (int p = 0; p < numOutputPorts() - 1; ++p)
+      {
+        // Now read the matrix from file
+        // The next function will open, read, and close the file
+        // Any error will be exported as an exception.
+        // The matlab classes are all based in the matfilebase class
+        // which carries the definitions of the exceptions. These
+        // definitions are inherited by all other "matlab classes"
+
+        auto ma = readmatlabarray(smfr.mfile, choices[p]);
+
+        // An empty array means something must have gone wrong
+        // Or there is no data to put on this port.
+        // Do not translate empty arrays, but continue to the
+        // next output port.
+
+        if (ma.isempty())
+        {
+          continue;
+        }
+
+        // The data is still in matlab format and the next function
+        // creates a SCIRun matrix object
+
+        auto data = processMatlabData(ma);
+
+        send_output_handle(outputPorts()[p]->internalId(), data);
+      }
+
+      StringHandle filenameH(new String(filename));
+      sendOutput(filenameOut, filenameH);
+    }
+    catch (matlabfile::could_not_open_file&)
+    {
+      error("Could not open file");
+    }
+    catch (matlabfile::invalid_file_format&)
+    {
+      error("Invalid file format");
+    }
+    catch (matlabfile::io_error&)
+    {
+      error("IO error");
+    }
+    catch (matlabfile::out_of_range&)
+    {
+      error("Out of range");
+    }
+    catch (matlabfile::invalid_file_access&)
+    {
+      error("Invalid file access");
+    }
+    catch (matlabfile::empty_matlabarray&)
+    {
+      error("Empty matlab array");
+    }
+    catch (matlabfile::matfileerror&)
+    {
+      error("Internal error in reader");
+    }
   }
 }
 
-void ImportFieldsFromMatlab::indexmatlabfile()
+void MatlabFileIndexModule::indexmatlabfile()
 {
   auto state = get_state();
   auto filename = state->getValue(Variables::Filename).toFilename().string();
@@ -232,7 +219,7 @@ void ImportFieldsFromMatlab::indexmatlabfile()
       {
         ma = mfile.getmatlabarrayinfo(p); // do not load all the data fields
         std::string infotext;
-        if ((cindex = translate.sciFieldCompatible(ma, infotext)))
+        if ((cindex = indexMatlabFile(translate, ma, infotext)))
         {
           // in case we need to propose a matrix to load, select
           // the one that is most compatible with the data
@@ -251,31 +238,31 @@ void ImportFieldsFromMatlab::indexmatlabfile()
     }
     catch (matlabfile::could_not_open_file&)
     {
-      warning("ImportFieldsFromMatlab: Could not open file");
+      warning("Could not open file");
     }
     catch (matlabfile::invalid_file_format&)
     {
-      warning("ImportFieldsFromMatlab: Invalid file format");
+      warning("Invalid file format");
     }
     catch (matlabfile::io_error&)
     {
-      warning("ImportFieldsFromMatlab: IO error");
+      warning("IO error");
     }
     catch (matlabfile::out_of_range&)
     {
-      warning("ImportFieldsFromMatlab: Out of range");
+      warning("Out of range");
     }
     catch (matlabfile::invalid_file_access&)
     {
-      warning("ImportFieldsFromMatlab: Invalid file access");
+      warning("Invalid file access");
     }
     catch (matlabfile::empty_matlabarray&)
     {
-      warning("ImportFieldsFromMatlab: Empty matlab array");
+      warning("Empty matlab array");
     }
     catch (matlabfile::matfileerror&)
     {
-      warning("ImportFieldsFromMatlab: Internal error in reader");
+      warning("Internal error in reader");
     }
   }
 }

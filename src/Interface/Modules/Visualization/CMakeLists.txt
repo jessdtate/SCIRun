@@ -1,12 +1,10 @@
-
 #
 #  For more information, please see: http://software.sci.utah.edu
 #
 #  The MIT License
 #
-#  Copyright (c) 2015 Scientific Computing and Imaging Institute,
+#  Copyright (c) 2020 Scientific Computing and Imaging Institute,
 #  University of Utah.
-#
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -27,19 +25,20 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
+
 SET(Interface_Modules_Visualization_FORMS
   CreateStandardColorMap.ui
   GenerateStreamLines.ui
   ShowField.ui
   ShowFieldGlyphs.ui
-  ShowFieldGlyphsScalarTab.ui
-  ShowFieldGlyphsVectorTab.ui
-  ShowFieldGlyphsTensorTab.ui
-  ShowFieldGlyphsSecondaryTab.ui
   ShowString.ui
   ShowColorMap.ui
   RescaleColorMap.ui
-  InterfaceWithOspray.ui
+  ShowFieldWithOspray.ui
+  ShowAndEditDipoles.ui
+  ShowMeshBoundingBox.ui
+  ShowOrientationAxes.ui
+  GeometryBuffer.ui
 )
 
 SET(Interface_Modules_Visualization_HEADERS
@@ -48,13 +47,14 @@ SET(Interface_Modules_Visualization_HEADERS
   share.h
   ShowFieldDialog.h
   ShowFieldGlyphsDialog.h
-  ShowFieldGlyphsScalarTabDialog.h
-  ShowFieldGlyphsVectorTabDialog.h
-  ShowFieldGlyphsTensorTabDialog.h
   ShowStringDialog.h
   ShowColorMapDialog.h
   RescaleColorMapDialog.h
-  InterfaceWithOsprayDialog.h
+  ShowFieldWithOsprayDialog.h
+  ShowAndEditDipolesDialog.h
+  ShowMeshBoundingBoxDialog.h
+  ShowOrientationAxesDialog.h
+  GeometryBufferDialog.h
 )
 
 SET(Interface_Modules_Visualization_SOURCES
@@ -62,17 +62,18 @@ SET(Interface_Modules_Visualization_SOURCES
   GenerateStreamLinesDialog.cc
   ShowFieldDialog.cc
   ShowFieldGlyphsDialog.cc
-  ShowFieldGlyphsScalarTabDialog.cc
-  ShowFieldGlyphsVectorTabDialog.cc
-  ShowFieldGlyphsTensorTabDialog.cc
   ShowStringDialog.cc
   ShowColorMapDialog.cc
   RescaleColorMapDialog.cc
-  InterfaceWithOsprayDialog.cc
+  ShowFieldWithOsprayDialog.cc
+  ShowAndEditDipolesDialog.cc
+  ShowMeshBoundingBoxDialog.cc
+  ShowOrientationAxesDialog.cc
+  GeometryBufferDialog.cc
 )
 
-QT4_WRAP_UI(Interface_Modules_Visualization_FORMS_HEADERS ${Interface_Modules_Visualization_FORMS})
-QT4_WRAP_CPP(Interface_Modules_Visualization_HEADERS_MOC ${Interface_Modules_Visualization_HEADERS})
+QT_WRAP_UI(Interface_Modules_Visualization_FORMS_HEADERS "${Interface_Modules_Visualization_FORMS}")
+QT_WRAP_CPP(Interface_Modules_Visualization_HEADERS_MOC "${Interface_Modules_Visualization_HEADERS}")
 
 SCIRUN_ADD_LIBRARY(Interface_Modules_Visualization
   ${Interface_Modules_Visualization_HEADERS}

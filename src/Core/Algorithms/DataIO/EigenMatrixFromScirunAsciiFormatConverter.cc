@@ -3,10 +3,9 @@
 
    The MIT License
 
-   Copyright (c) 2015 Scientific Computing and Imaging Institute,
+   Copyright (c) 2020 Scientific Computing and Imaging Institute,
    University of Utah.
 
-   License for the specific language governing rights and limitations under
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
    to deal in the Software without restriction, including without limitation
@@ -26,16 +25,15 @@
    DEALINGS IN THE SOFTWARE.
 */
 
-#include <boost/timer.hpp>
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
-#include <boost/make_shared.hpp>
+#include <Core/Utils/SmartPointers.h>
 
 #include <iostream>
 #include <fstream>
-#include <streambuf>
 
 #include <Core/Algorithms/DataIO/EigenMatrixFromScirunAsciiFormatConverter.h>
 #include <Core/Algorithms/Base/AlgorithmPreconditions.h>
@@ -75,7 +73,7 @@ SparseRowMatrixHandle EigenMatrixFromScirunAsciiFormatConverter::makeSparse(cons
   SparseData data = convertRaw(parseSparseMatrixString(getMatrixContentsLine(readFile(matFile)).get()).get());
   if (reporter_)
     reporter_->update_progress(0.7);
-  SparseRowMatrixHandle mat(boost::make_shared<SparseRowMatrix>(data.get<0>(), data.get<1>()));
+  SparseRowMatrixHandle mat(makeShared<SparseRowMatrix>(data.get<0>(), data.get<1>()));
 
   typedef Eigen::Triplet<double> T;
   std::vector<T> tripletList;
@@ -134,7 +132,7 @@ std::string EigenMatrixFromScirunAsciiFormatConverter::readFile(const std::strin
 DenseMatrixHandle EigenMatrixFromScirunAsciiFormatConverter::makeDense(const std::string& matFile)
 {
   DenseData data = convertRaw(parseDenseMatrixString(getMatrixContentsLine(readFile(matFile)).get()).get());
-  DenseMatrixHandle mat(boost::make_shared<DenseMatrix>(data.get<0>(), data.get<1>()));
+  DenseMatrixHandle mat(makeShared<DenseMatrix>(data.get<0>(), data.get<1>()));
 
   auto values = data.get<2>().begin();
   for (int i = 0; i < mat->rows(); ++i)
@@ -147,7 +145,7 @@ DenseMatrixHandle EigenMatrixFromScirunAsciiFormatConverter::makeDense(const std
 DenseColumnMatrixHandle EigenMatrixFromScirunAsciiFormatConverter::makeColumn(const std::string& matFile)
 {
   DenseData data = convertRaw(parseColumnMatrixString(getMatrixContentsLine(readFile(matFile)).get()).get());
-  DenseColumnMatrixHandle mat(boost::make_shared<DenseColumnMatrix>(data.get<0>()));
+  DenseColumnMatrixHandle mat(makeShared<DenseColumnMatrix>(data.get<0>()));
 
   auto values = data.get<2>().begin();
   for (int i = 0; i < mat->rows(); ++i)

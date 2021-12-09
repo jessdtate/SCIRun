@@ -3,9 +3,8 @@
 #
 #  The MIT License
 #
-#  Copyright (c) 2015 Scientific Computing and Imaging Institute,
+#  Copyright (c) 2020 Scientific Computing and Imaging Institute,
 #  University of Utah.
-#
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -25,6 +24,7 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 #
+
 
 # Sources of Core/Algorithms/Converter classes
 
@@ -57,15 +57,6 @@ TARGET_LINK_LIBRARIES(Core_Algorithms_Legacy_Converter
   Core_Datatypes
   Core_Datatypes_Legacy_Field
   Core_Datatypes_Legacy_Nrrd
-  #Core_Util
-  #Core_Exceptions
-  #Core_Thread
-  #Core_Geom
-  #Core_Geometry
-  #Core_Persistent
-  #Core_Basis
-  #${M_LIBRARY}
-  #${SCI_TEEM_LIBRARY}
 )
 
 IF(BUILD_SHARED_LIBS)

@@ -1,12 +1,10 @@
-
 #
 #  For more information, please see: http://software.sci.utah.edu
 #
 #  The MIT License
 #
-#  Copyright (c) 2015 Scientific Computing and Imaging Institute,
+#  Copyright (c) 2020 Scientific Computing and Imaging Institute,
 #  University of Utah.
-#
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -27,6 +25,7 @@
 #  DEALINGS IN THE SOFTWARE.
 #
 
+
 SET(Interface_Modules_Fields_FORMS
   CreateLatVol.ui
   BuildMappingMatrix.ui
@@ -38,7 +37,7 @@ SET(Interface_Modules_Fields_FORMS
   SplitFieldByConnectedRegionDialog.ui
   CreateFieldData.ui
   CalculateFieldData.ui
-  InterfaceWithCleaverDialog.ui
+  InterfaceWithCleaver2.ui
   InterfaceWithTetGen.ui
   SetFieldDataDialog.ui
   SetFieldDataToConstantValue.ui
@@ -54,6 +53,7 @@ SET(Interface_Modules_Fields_FORMS
   ConvertIndicesToFieldData.ui
   ConvertMeshToPointCloudDialog.ui
   MapFieldDataOntoNodes.ui
+  MapFieldDataOntoNodesRadialbasis.ui
   ClipFieldByFunction.ui
   GenerateSinglePointProbeFromField.ui
   GeneratePointSamplesFromFieldOrWidget.ui
@@ -73,6 +73,12 @@ SET(Interface_Modules_Fields_FORMS
   RefineTetMeshLocally.ui
   GetMeshQualityField.ui
   CleanupTetMeshDialog.ui
+  CalculateInsideWhichFieldDialog.ui
+  CalculateMeshCenterDialog.ui
+  CreateImageDialog.ui
+  GetCentroidsFromMeshDialog.ui
+  CalculateMeshNodes.ui
+  ApplyFilterToFieldData.ui
 )
 
 SET(Interface_Modules_Fields_HEADERS
@@ -86,7 +92,7 @@ SET(Interface_Modules_Fields_HEADERS
   ReportFieldInfoDialog.h
   SplitFieldByDomainDialog.h
   SplitFieldByConnectedRegionDialog.h
-  InterfaceWithCleaverDialog.h
+  InterfaceWithCleaver2Dialog.h
   SetFieldDataDialog.h
   SetFieldDataToConstantValueDialog.h
   MapFieldDataFromElemToNodeDialog.h
@@ -99,6 +105,7 @@ SET(Interface_Modules_Fields_HEADERS
   GetSliceFromStructuredFieldByIndicesDialog.h
   MapFieldDataOntoElemsDialog.h
   MapFieldDataOntoNodesDialog.h
+  MapFieldDataOntoNodesRadialbasisDialog.h
   GenerateSinglePointProbeFromFieldDialog.h
   ClipFieldByFunctionDialog.h
   RefineMeshDialog.h
@@ -121,6 +128,13 @@ SET(Interface_Modules_Fields_HEADERS
   RefineTetMeshLocallyDialog.h
   GetMeshQualityFieldDialog.h
   CleanupTetMeshDialog.h
+  CalculateInsideWhichFieldDialog.h
+  CalculateMeshCenterDialog.h
+  CreateImageDialog.h
+  GetCentroidsFromMeshDialog.h
+  CalculateMeshNodesDialog.h
+  InterfaceWithTetGenDialog.h
+  ApplyFilterToFieldDataDialog.h
 )
 
 SET(Interface_Modules_Fields_SOURCES
@@ -135,7 +149,7 @@ SET(Interface_Modules_Fields_SOURCES
   ReportFieldInfoDialog.cc
   SplitFieldByDomainDialog.cc
   SplitFieldByConnectedRegionDialog.cc
-  InterfaceWithCleaverDialog.cc
+  InterfaceWithCleaver2Dialog.cc
   SetFieldDataDialog.cc
   SetFieldDataToConstantValueDialog.cc
   MapFieldDataFromElemToNodeDialog.cc
@@ -149,6 +163,7 @@ SET(Interface_Modules_Fields_SOURCES
   CalculateDistanceToFieldBoundaryDialog.cc
   MapFieldDataOntoElemsDialog.cc
   MapFieldDataOntoNodesDialog.cc
+  MapFieldDataOntoNodesRadialbasisDialog.cc
   ClipFieldByFunctionDialog.cc
   SwapFieldDataWithMatrixEntriesDialog.cc
   RefineMeshDialog.cc
@@ -168,19 +183,17 @@ SET(Interface_Modules_Fields_SOURCES
   RefineTetMeshLocallyDialog.cc
   GetMeshQualityFieldDialog.cc
   CleanupTetMeshDialog.cc
+  CalculateInsideWhichFieldDialog.cc
+  CalculateMeshCenterDialog.cc
+  CreateImageDialog.cc
+  GetCentroidsFromMeshDialog.cc
+  CalculateMeshNodesDialog.cc
+  InterfaceWithTetGenDialog.cc
+  ApplyFilterToFieldDataDialog.cc
 )
 
-IF(WITH_TETGEN)
-  SET(Interface_Modules_Fields_SOURCES ${Interface_Modules_Fields_SOURCES}
-    InterfaceWithTetGenDialog.cc
-  )
-  SET(Interface_Modules_Fields_HEADERS ${Interface_Modules_Fields_HEADERS}
-    InterfaceWithTetGenDialog.h
-  )
-ENDIF(WITH_TETGEN)
-
-QT4_WRAP_UI(Interface_Modules_Fields_FORMS_HEADERS ${Interface_Modules_Fields_FORMS})
-QT4_WRAP_CPP(Interface_Modules_Fields_HEADERS_MOC ${Interface_Modules_Fields_HEADERS})
+QT_WRAP_UI(Interface_Modules_Fields_FORMS_HEADERS "${Interface_Modules_Fields_FORMS}")
+QT_WRAP_CPP(Interface_Modules_Fields_HEADERS_MOC "${Interface_Modules_Fields_HEADERS}")
 
 SCIRUN_ADD_LIBRARY(Interface_Modules_Fields
   ${Interface_Modules_Fields_HEADERS}
@@ -203,4 +216,5 @@ IF(BUILD_SHARED_LIBS)
   ADD_DEFINITIONS(-DBUILD_Interface_Modules_Fields)
 ENDIF(BUILD_SHARED_LIBS)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../Base/CustomWidgets/CTK)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})

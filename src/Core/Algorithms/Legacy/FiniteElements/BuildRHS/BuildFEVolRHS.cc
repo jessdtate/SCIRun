@@ -3,9 +3,8 @@
 
    The MIT License
 
-   Copyright (c) 2015 Scientific Computing and Imaging Institute,
+   Copyright (c) 2020 Scientific Computing and Imaging Institute,
    University of Utah.
-
 
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
@@ -25,6 +24,7 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
    DEALINGS IN THE SOFTWARE.
 */
+
 
 #include <Core/Algorithms/Legacy/FiniteElements/BuildRHS/BuildFEVolRHS.h>
 #include <Core/Algorithms/Base/AlgorithmPreconditions.h>
@@ -57,7 +57,7 @@ class FEMVolRHSBuilder
   FEMVolRHSBuilder(const AlgorithmBase *algo) :
       algo_(algo), numprocessors_(Parallel::NumCores()),
       barrier_("FEMVolRHSBuilder Barrier", numprocessors_),
-      mesh_(0), field_(0),
+      mesh_(nullptr), field_(nullptr),
       domain_dimension(0), local_dimension_nodes(0),
       local_dimension_add_nodes(0),
       local_dimension_derivatives(0),
@@ -530,7 +530,7 @@ void FEMVolRHSBuilder::parallel(int proc_num)
 		/// the main thread makes the matrix
 		if (proc_num == 0)
 		{
-		 rhsmatrix_ = boost::make_shared<DenseMatrix>(global_dimension,1);
+		 rhsmatrix_ = makeShared<DenseMatrix>(global_dimension,1);
 		}
 		success_[proc_num] = true;
 	}

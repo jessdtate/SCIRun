@@ -3,10 +3,9 @@
 
    The MIT License
 
-   Copyright (c) 2015 Scientific Computing and Imaging Institute,
+   Copyright (c) 2020 Scientific Computing and Imaging Institute,
    University of Utah.
 
-   License for the specific language governing rights and limitations under
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
    to deal in the Software without restriction, including without limitation
@@ -26,36 +25,23 @@
    DEALINGS IN THE SOFTWARE.
 */
 
+
 #include <iostream>
 #include <stdexcept>
-#include <QtGui>
+#include <Interface/qt_include.h>
 #include <Core/Logging/Log.h>
 #include <Interface/Application/Note.h>
 #include <Interface/Application/HasNotes.h>
 #include <Interface/Application/NoteEditor.h>
-#include <Interface/Application/SCIRunMainWindow.h>
+#include <Interface/Application/MainWindowCollaborators.h>
 
 using namespace SCIRun::Gui;
 using namespace SCIRun::Core::Logging;
 
 HasNotes::HasNotes(const std::string& name, bool positionAdjustable) :
-  noteEditor_(QString::fromStdString(name), positionAdjustable, 0),
-  destroyed_(false)
+  noteEditor_(QString::fromStdString(name), positionAdjustable, nullptr)
 {
-  noteEditor_.setStyleSheet(SCIRunMainWindow::Instance()->styleSheet());
-}
-
-HasNotes::~HasNotes()
-{
-  destroy();
-}
-
-void HasNotes::destroy()
-{
-  if (!destroyed_)
-  {
-    destroyed_ = true;
-  }
+  noteEditor_.setStyleSheet(scirunStylesheet());
 }
 
 void HasNotes::connectNoteEditorToAction(QAction* action)
@@ -85,48 +71,26 @@ void HasNotes::setDefaultNoteFontSize(int size)
   noteEditor_.setDefaultNoteFontSize(size);
 }
 
-NoteDisplayHelper::NoteDisplayHelper(NoteDisplayStrategyPtr display) :
-  networkObjectWithNote_(nullptr), scene_(nullptr), note_(nullptr),
-  notePosition_(Default),
-  defaultNotePosition_(Top), //TODO
-  displayStrategy_(display),
-  destroyed_(false)
+NoteDisplayHelper::NoteDisplayHelper(NoteDisplayStrategyPtr display, QGraphicsItem* parent) :
+  parent_(parent), note_(nullptr),
+  notePosition_(NotePosition::Default),
+  defaultNotePosition_(NotePosition::Top), //TODO
+  displayStrategy_(display)
 {
-}
-
-NoteDisplayHelper::~NoteDisplayHelper()
-{
-  destroy();
-}
-
-void NoteDisplayHelper::destroy()
-{
-  if (!destroyed_)
-  {
-    if (note_ && scene_)
-    {
-      scene_->removeItem(note_);
-    }
-    delete note_;
-    destroyed_ = true;
-  }
 }
 
 void NoteDisplayHelper::updateNoteImpl(const Note& note)
 {
   if (!note_)
   {
-    setNoteGraphicsContext();
-    if (!scene_)
-      GeneralLog::Instance().get()->warn("Scene not set, network notes will not be displayed.");
-    note_ = new QGraphicsTextItem("", nullptr, scene_);
+    note_ = new QGraphicsTextItem("", parent_);
     note_->setDefaultTextColor(Qt::white);
   }
 
   note_->setHtml(note.html_);
   notePosition_ = note.position_;
   updateNotePosition();
-  note_->setZValue(networkObjectWithNote_->zValue() - 1);
+  note_->setZValue(parent_->zValue() - 1);
 }
 
 void NoteDisplayHelper::clearNoteCursor()
@@ -141,13 +105,12 @@ void NoteDisplayHelper::clearNoteCursor()
 
 QPointF NoteDisplayHelper::relativeNotePosition()
 {
-  if (note_ && networkObjectWithNote_)
+  if (note_ && parent_)
   {
-    auto position = notePosition_ == Default ? defaultNotePosition_ : notePosition_;
-    note_->setVisible(!(Tooltip == position || None == position));
-    networkObjectWithNote_->setToolTip("");
+    auto position = notePosition_ == NotePosition::Default ? defaultNotePosition_ : notePosition_;
+    note_->setVisible(!(NotePosition::Tooltip == position || NotePosition::None == position));
 
-    return displayStrategy_->relativeNotePosition(networkObjectWithNote_, note_, position);
+    return displayStrategy_->relativeNotePosition(parent_, note_, position);
   }
   return QPointF();
 }
@@ -165,10 +128,9 @@ void NoteDisplayHelper::setDefaultNoteSizeImpl(int size)
 
 void NoteDisplayHelper::updateNotePosition()
 {
-  if (note_ && networkObjectWithNote_)
+  if (note_ && parent_)
   {
-    auto position = positioner_->currentPosition() + relativeNotePosition();
-    note_->setPos(position);
+    note_->setPos(relativeNotePosition());
   }
 }
 

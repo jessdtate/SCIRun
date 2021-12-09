@@ -3,10 +3,9 @@
 
    The MIT License
 
-   Copyright (c) 2015 Scientific Computing and Imaging Institute,
+   Copyright (c) 2020 Scientific Computing and Imaging Institute,
    University of Utah.
 
-   License for the specific language governing rights and limitations under
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
    to deal in the Software without restriction, including without limitation
@@ -25,6 +24,7 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
    DEALINGS IN THE SOFTWARE.
 */
+
 
 #ifndef MODULES_TEEM_CONVERTERS_CONVERTNRRDTOMATRIX_H
 #define MODULES_TEEM_CONVERTERS_CONVERTNRRDTOMATRIX_H
@@ -52,15 +52,15 @@ namespace Teem {
   {
   public:
     ConvertNrrdToMatrix();
-    virtual void execute() override;
-    virtual void setStateDefaults() override;
+    void execute() override;
+    void setStateDefaults() override;
 
     INPUT_PORT(0, Data, NrrdDataType);
     INPUT_PORT(1, Rows, NrrdDataType);
     INPUT_PORT(2, Columns, NrrdDataType);
     OUTPUT_PORT(0, OutputMatrix, Matrix);
 
-    MODULE_TRAITS_AND_INFO(ModuleHasUI)
+    MODULE_TRAITS_AND_INFO(ModuleFlags::ModuleHasUI)
   private:
     Core::Datatypes::MatrixHandle create_matrix_from_nrrds(boost::optional<NrrdDataHandle> dataH,
       boost::optional<NrrdDataHandle> rowsH,

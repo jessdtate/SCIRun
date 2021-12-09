@@ -3,10 +3,9 @@
 
    The MIT License
 
-   Copyright (c) 2015 Scientific Computing and Imaging Institute,
+   Copyright (c) 2020 Scientific Computing and Imaging Institute,
    University of Utah.
 
-   License for the specific language governing rights and limitations under
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
    to deal in the Software without restriction, including without limitation
@@ -25,6 +24,7 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
    DEALINGS IN THE SOFTWARE.
 */
+
 
 /// @todo Documentation Modules/Visualization/CreateStandardColorMap.cc
 
@@ -52,6 +52,8 @@ void CreateStandardColorMap::setStateDefaults()
   state->setValue(Parameters::ColorMapInvert, false);
   state->setValue(Parameters::ColorMapShift, 0.0);
   state->setValue(Parameters::AlphaUserPointsVector, Variable::List());
+  state->setValue(Parameters::CustomColor0, ColorRGB(0.2, 0.2, 0.2).toString());
+  state->setValue(Parameters::CustomColor1, ColorRGB(0.8, 0.8, 0.8).toString());
 }
 
 void CreateStandardColorMap::execute()
@@ -66,11 +68,28 @@ void CreateStandardColorMap::execute()
 
     //TODO cbright: pass computed alpha function from transient state to factory
     auto alphaPoints = state->getValue(Parameters::AlphaUserPointsVector).toVector();
+    std::vector<double> points;
+    for(auto point : alphaPoints)
+    {
+      points.push_back(point.toVector()[0].toDouble());
+      points.push_back(point.toVector()[1].toDouble());
+    }
 
     //just in case there is a problem with the QT values...
-    res = std::min(std::max(res,2),256);
-    shift = std::min(std::max(shift,-1.),1.);
-    sendOutput(ColorMapObject, StandardColorMapFactory::create(name, res, shift, inv));
+    res = std::min(std::max(res, 2), 256);
+    shift = std::min(std::max(shift, -1.0), 1.0);
+
+
+    std::vector<ColorRGB> customData;
+    customData.push_back(ColorRGB(state->getValue(Parameters::CustomColor0).toString()));
+    customData.push_back(ColorRGB(state->getValue(Parameters::CustomColor1).toString()));
+
+    ColorMapHandle cmap;
+    cmap = (name == "Custom" ) ?
+      StandardColorMapFactory::create(customData, name, res, shift, inv, 0.5, 1.0, points) :
+      StandardColorMapFactory::create(name, res, shift, inv, 0.5, 1.0, points);
+
+    sendOutput(ColorMapObject, cmap);
   }
 }
 
@@ -80,3 +99,5 @@ ALGORITHM_PARAMETER_DEF(Visualization, ColorMapShift);
 ALGORITHM_PARAMETER_DEF(Visualization, ColorMapResolution);
 ALGORITHM_PARAMETER_DEF(Visualization, AlphaUserPointsVector);
 ALGORITHM_PARAMETER_DEF(Visualization, AlphaFunctionVector);
+ALGORITHM_PARAMETER_DEF(Visualization, CustomColor0);
+ALGORITHM_PARAMETER_DEF(Visualization, CustomColor1);

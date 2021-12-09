@@ -3,10 +3,9 @@
 
    The MIT License
 
-   Copyright (c) 2015 Scientific Computing and Imaging Institute,
+   Copyright (c) 2020 Scientific Computing and Imaging Institute,
    University of Utah.
 
-   License for the specific language governing rights and limitations under
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
    to deal in the Software without restriction, including without limitation
@@ -26,9 +25,11 @@
    DEALINGS IN THE SOFTWARE.
 */
 
+
 #include <Interface/Modules/Matlab/ExportFieldsToMatlabDialog.h>
 #include <Core/Algorithms/Base/AlgorithmVariableNames.h>
 #include <Modules/Legacy/Matlab/DataIO/ExportFieldsToMatlab.h>
+#include <Core/Algorithms/Base/VariableHelper.h>
 
 using namespace SCIRun::Gui;
 using namespace SCIRun::Dataflow::Networks;
@@ -57,19 +58,33 @@ void ExportFieldsToMatlabDialog::updateFromPortChange(int, const std::string& po
 
   static const std::string typeName = "Field";
   const int lineEditColumn = 1;
-  syncTableRowsWithDynamicPort(portName, typeName, tableWidget, lineEditColumn, type, TableItemMakerMap(), 
+  syncTableRowsWithDynamicPort(portName, typeName, tableWidget, lineEditColumn, type, TableItemMakerMap(),
   {
     { 2, [this]() { return makeInputArrayTypeComboBoxItem(); } }
   });
+  pushArrayType();
 }
 
 QComboBox* ExportFieldsToMatlabDialog::makeInputArrayTypeComboBoxItem() const
 {
   QStringList bcList;
-  bcList << "numeric array" << "struct array";
+  bcList << "struct array" << "numeric array";
   auto bcBox = new QComboBox();
   bcBox->addItems(bcList);
-  bcBox->setCurrentIndex(bcBox->findText(QString::fromStdString(toStringVector(state_->getValue(Parameters::FieldFormats).toVector())[tableWidget->rowCount() - 1])));
+
+  auto formats = state_->getValue(Parameters::FieldFormats).toVector();
+  if (formats.size() >= tableWidget->rowCount())
+  {
+    bcBox->setCurrentIndex(
+      bcBox->findText(
+        QString::fromStdString(
+          toStringVector(formats)[tableWidget->rowCount() - 1])));
+  }
+  else
+  {
+    bcBox->setCurrentIndex(0);
+  }
+
   connect(bcBox, SIGNAL(currentIndexChanged(int)), this, SLOT(pushArrayType()));
   return bcBox;
 }

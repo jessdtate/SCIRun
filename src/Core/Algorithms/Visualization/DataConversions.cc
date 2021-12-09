@@ -3,10 +3,9 @@
 
    The MIT License
 
-   Copyright (c) 2015 Scientific Computing and Imaging Institute,
+   Copyright (c) 2020 Scientific Computing and Imaging Institute,
    University of Utah.
 
-   
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
    to deal in the Software without restriction, including without limitation
@@ -26,6 +25,7 @@
    DEALINGS IN THE SOFTWARE.
 */
 
+
 #include <Core/Algorithms/Visualization/DataConversions.h>
 #include <Core/Algorithms/Visualization/RenderFieldState.h>
 
@@ -41,14 +41,14 @@ bool valToColor(const Vector &v, Core::Datatypes::ColorRGB &c)
 }
 
 template <>
-bool valToColor(const Tensor &t, Core::Datatypes::ColorRGB &c)
+bool valToColor(const Tensor &, Core::Datatypes::ColorRGB &)
 {
   /// get_eigenvectors was not implemented in Tensor. Can't identify colors.
   // Tensor tt = t;
   //
   // Vector e1, e2, e3;
   // tt.get_eigenvectors(e1, e2, e3);
-  //     
+  //
   // e1.safe_normalize();
   // double rr = fabs(e1.x());
   // double gg = fabs(e1.y());
@@ -72,7 +72,7 @@ bool valToDouble(const Vector &data_in, double &data_out)
 }
 
 template <>
-bool valToDouble(const Tensor &data_in, double &data_out)
+bool valToDouble(const Tensor &, double &)
 {
   // Tensor t = data_in;
   // double v1, v2, v3;
@@ -95,7 +95,7 @@ bool valToVector(const Vector &data_in, Vector &data_out)
 }
 
 template <>
-bool valToVector(const Tensor &data_in, Vector &data_out)
+bool valToVector(const Tensor &, Vector &)
 {
   // Tensor t = data_in;
   // double v1, v2, v3;
@@ -127,25 +127,18 @@ bool valToBuffer(const char &value, std::ostringstream &buffer)
 
 RenderState::RenderState()
 {
-  for (int i = 0; i < MAX_ACTION_FLAGS; ++i)
-  {
-    mFlags[i] = false;
-  }
-
   // Default settings.
-  mFlags[USE_NORMALS] = true;
+  mFlags[static_cast<int>(ActionFlags::USE_NORMALS)] = true;
 }
 
 void RenderState::set(ActionFlags flag, bool truth)
 {
-  mFlags[flag] = truth;
+  mFlags[static_cast<int>(flag)] = truth;
 }
 
 bool RenderState::get(ActionFlags flag) const
 {
-  return mFlags[flag];
+  return mFlags[static_cast<int>(flag)];
 }
 
 } // end namespace SCIRun
-
-

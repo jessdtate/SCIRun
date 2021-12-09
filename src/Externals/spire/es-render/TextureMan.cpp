@@ -1,3 +1,35 @@
+/*
+   For more information, please see: http://software.sci.utah.edu
+
+   The MIT License
+
+   Copyright (c) 2020 Scientific Computing and Imaging Institute,
+   University of Utah.
+
+   Permission is hereby granted, free of charge, to any person obtaining a
+   copy of this software and associated documentation files (the "Software"),
+   to deal in the Software without restriction, including without limitation
+   the rights to use, copy, modify, merge, publish, distribute, sublicense,
+   and/or sell copies of the Software, and to permit persons to whom the
+   Software is furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included
+   in all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+   THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+   DEALINGS IN THE SOFTWARE.
+*/
+
+
+#ifdef __APPLE__
+#define GL_SILENCE_DEPRECATION
+#endif
+
 #include <string>
 #include <sstream>
 #include <es-fs/Filesystem.hpp>
@@ -82,7 +114,7 @@ namespace ren {
 
       GL(glTexImage2D(GL_TEXTURE_2D, 0, internalFormat,
         textureWidth, textureHeight, 0,
-        format, type, 0));
+        format, type, nullptr));
 
       // Simply update mGLToName and mNameToGL. The fulfillment system will
       // handle everything else.
@@ -159,6 +191,51 @@ namespace ren {
     return tex;
   }
 
+  ren::Texture TextureMan::createTexture(
+    const std::string& assetName,
+    GLint internalformat,
+    GLsizei width,
+    GLsizei height,
+    GLenum format,
+    GLenum type,
+    const std::vector<uint8_t>& data)
+  {
+    GLuint texID;
+    auto it = mNameToGL.find(assetName);
+    if (it != mNameToGL.end())
+    {
+      texID = it->second;
+    }
+    else
+    {
+      GL(glGenTextures(1, &texID));
+      GL(glBindTexture(GL_TEXTURE_2D, texID));
+      GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+      GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+      GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+      GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+      GL(glTexImage2D(GL_TEXTURE_2D, 0, internalformat, width, height, 0, format, type,
+        (const GLvoid*)(&data[0])));
+
+      mGLToName.insert(std::make_pair(texID, assetName));
+      mNameToGL.insert(std::make_pair(assetName, texID));
+
+      GL(glBindTexture(GL_TEXTURE_2D, 0));
+    }
+
+    ren::Texture tex;
+    tex.glid = texID;
+    tex.textureType = GL_TEXTURE_2D;
+    tex.textureWidth = width;
+    tex.textureHeight = height;
+    tex.textureDepth = 1;
+    tex.internalFormat = internalformat;
+    tex.format = format;
+    tex.type = type;
+    tex.filter = GL_LINEAR;
+    return tex;
+  }
+
   bool TextureMan::resizeTexture(
     ren::Texture &tex, GLsizei textureWidth,
     GLsizei textureHeight)
@@ -171,7 +248,7 @@ namespace ren {
     GL(glBindTexture(GL_TEXTURE_2D, tex.glid));
     GL(glTexImage2D(GL_TEXTURE_2D, 0, tex.internalFormat,
       textureWidth, textureHeight, 0,
-      tex.format, tex.type, 0));
+      tex.format, tex.type, nullptr));
     tex.textureWidth = textureWidth;
     tex.textureHeight = textureHeight;
     return true;
@@ -649,7 +726,7 @@ namespace ren {
         // Find the asset name in mNameToGL and erase.
         mNameToGL.erase(mNameToGL.find(it->second));
 
-        std::cout << "Texture GC: " << it->second << std::endl;
+        //std::cout << "Texture GC: " << it->second << std::endl;
 
         // Erase our iterator and move on. Ensure we delete the program.
         GLuint idToErase = it->first;
@@ -681,7 +758,7 @@ namespace ren {
       // Find the asset name in mNameToGL and erase.
       mNameToGL.erase(mNameToGL.find(it->second));
 
-      std::cout << "Texture GC: " << it->second << std::endl;
+      //std::cout << "Texture GC: " << it->second << std::endl;
 
       // Erase our iterator and move on. Ensure we delete the program.
       GLuint idToErase = it->first;

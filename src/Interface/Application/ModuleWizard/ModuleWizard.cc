@@ -3,10 +3,9 @@
 
    The MIT License
 
-   Copyright (c) 2015 Scientific Computing and Imaging Institute,
+   Copyright (c) 2020 Scientific Computing and Imaging Institute,
    University of Utah.
 
-   License for the specific language governing rights and limitations under
    Permission is hereby granted, free of charge, to any person obtaining a
    copy of this software and associated documentation files (the "Software"),
    to deal in the Software without restriction, including without limitation
@@ -25,6 +24,8 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
    DEALINGS IN THE SOFTWARE.
 */
+
+
 /****************************************************************************
 **
 ** Copyright (C) 2015 The Qt Company Ltd.
@@ -65,7 +66,8 @@
 **
 ****************************************************************************/
 
-#include <QtGui>
+
+#include <Interface/qt_include.h>
 
 #include <Interface/Application/ModuleWizard/ModuleWizard.h>
 
@@ -130,9 +132,9 @@ void ClassWizard::accept()
     block += "public:\n";
 
     if (field("qobjectCtor").toBool()) {
-        block += "    " + className + "(QObject *parent = 0);\n";
+        block += "    " + className + "(QObject *parent = nullptr);\n";
     } else if (field("qwidgetCtor").toBool()) {
-        block += "    " + className + "(QWidget *parent = 0);\n";
+        block += "    " + className + "(QWidget *parent = nullptr);\n";
     } else if (field("defaultCtor").toBool()) {
         block += "    " + className + "();\n";
         if (field("copyCtor").toBool()) {
@@ -151,7 +153,7 @@ void ClassWizard::accept()
 
     QFile headerFile(outputDir + "/" + header);
     if (!headerFile.open(QFile::WriteOnly | QFile::Text)) {
-        QMessageBox::warning(0, QObject::tr("Simple Wizard"),
+        QMessageBox::warning(nullptr, QObject::tr("Simple Wizard"),
                              QObject::tr("Cannot write file %1:\n%2")
                              .arg(headerFile.fileName())
                              .arg(headerFile.errorString()));
@@ -207,7 +209,7 @@ void ClassWizard::accept()
 
     QFile implementationFile(outputDir + "/" + implementation);
     if (!implementationFile.open(QFile::WriteOnly | QFile::Text)) {
-        QMessageBox::warning(0, QObject::tr("Simple Wizard"),
+        QMessageBox::warning(nullptr, QObject::tr("Simple Wizard"),
                              QObject::tr("Cannot write file %1:\n%2")
                              .arg(implementationFile.fileName())
                              .arg(implementationFile.errorString()));

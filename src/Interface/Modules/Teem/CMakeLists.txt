@@ -1,12 +1,10 @@
-
 #
 #  For more information, please see: http://software.sci.utah.edu
 #
 #  The MIT License
 #
-#  Copyright (c) 2015 Scientific Computing and Imaging Institute,
+#  Copyright (c) 2020 Scientific Computing and Imaging Institute,
 #  University of Utah.
-#
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -26,6 +24,7 @@
 #  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 #  DEALINGS IN THE SOFTWARE.
 #
+
 
 SET(Interface_Modules_Teem_FORMS
   ReportNrrdInfo.ui
@@ -52,8 +51,8 @@ SET(Interface_Modules_Teem_SOURCES
   SplitFieldIntoNrrdDataDialog.cc
 )
 
-QT4_WRAP_UI(Interface_Modules_Teem_FORMS_HEADERS ${Interface_Modules_Teem_FORMS})
-QT4_WRAP_CPP(Interface_Modules_Teem_HEADERS_MOC ${Interface_Modules_Teem_HEADERS})
+QT_WRAP_UI(Interface_Modules_Teem_FORMS_HEADERS "${Interface_Modules_Teem_FORMS}")
+QT_WRAP_CPP(Interface_Modules_Teem_HEADERS_MOC "${Interface_Modules_Teem_HEADERS}")
 
 SCIRUN_ADD_LIBRARY(Interface_Modules_Teem
   ${Interface_Modules_Teem_HEADERS}
